@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Authentication Complete</title>
+</head>
+<body>
+  <p>Authenticating... please wait.</p>
+  <script>
+    // flutter_web_auth_2 expects the callback page to post the full URL
+    // back to the opener window so the Dart code can extract the auth code.
+    // Use '*' for targetOrigin because the app may run on localhost while
+    // the redirect uses 127.0.0.1 (different origins).
+    if (window.opener) {
+      window.opener.postMessage(window.location.href, '*');
+      window.close();
+    }
+  </script>
+</body>
+</html>
