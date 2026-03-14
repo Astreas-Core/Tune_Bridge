@@ -1,0 +1,29 @@
+/// App-wide constants for TuneBridge.
+class AppConstants {
+  AppConstants._();
+
+  static const String appName = 'TuneBridge';
+
+  // Spotify API
+  static const String spotifyClientId = '30316bc52604440785bce01a5ad36705';
+  static const String spotifyRedirectUri = 'tunebridge://callback';
+  static const String spotifyAuthUrl = 'https://accounts.spotify.com/authorize';
+  static const String spotifyTokenUrl = 'https://accounts.spotify.com/api/token';
+  static const String spotifyBaseUrl = 'https://api.spotify.com/v1';
+  static const List<String> spotifyScopes = [
+    'user-read-private',
+    'user-read-email',
+    'user-library-read',
+    'playlist-read-private',
+    'playlist-read-collaborative',
+  ];
+
+  // Pagination
+  static const int defaultPageSize = 20;
+
+  // Hive box names
+  static const String userBox = 'user_box';
+  static const String tracksBox = 'tracks_box';
+  static const String playlistsBox = 'playlists_box';
+  static const String settingsBox = 'settings_box';
+}
