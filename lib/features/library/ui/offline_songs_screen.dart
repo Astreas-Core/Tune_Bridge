@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tune_bridge/core/di.dart';
-import 'package:tune_bridge/core/neumorphic.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
 import 'package:tune_bridge/core/routes.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
+import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 import 'package:tune_bridge/ui/widgets/song_tile.dart';
 
 class OfflineSongsScreen extends StatefulWidget {
@@ -59,42 +59,93 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Neumorphic.background,
-      appBar: AppBar(
-        title: Text('Offline Songs', style: TextStyle(color: Neumorphic.textDark)),
-        backgroundColor: Neumorphic.background,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Neumorphic.iconColor),
-      ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: Neumorphic.accent))
-          : _songs.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cloud_off, size: 64, color: Neumorphic.textLight),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No offline songs yet',
-                        style: TextStyle(color: Neumorphic.textLight, fontSize: 16),
-                      ),
-                    ],
+      backgroundColor: GlassColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: GlassColors.textPrimary,
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(top: 10, bottom: 100),
-                  itemCount: _songs.length,
-                  itemBuilder: (context, index) {
-                    final song = _songs[index];
-                    return SongTile(
-                      title: song.title,
-                      artist: song.artist,
-                      albumArtUrl: song.albumArtUrl,
-                      onTap: () => _playSong(index),
-                    );
-                  },
-                ),
+                  const Text(
+                    'Offline Songs',
+                    style: TextStyle(
+                      color: GlassColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 26,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: GlassColors.accent),
+                    )
+                  : _songs.isEmpty
+                      ? Center(
+                          child: GlassPanel(
+                            blur: 8,
+                            borderRadius: BorderRadius.circular(20),
+                            padding: const EdgeInsets.all(20),
+                            child: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.cloud_off_rounded,
+                                  size: 48,
+                                  color: GlassColors.textSecondary,
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  'No offline songs yet',
+                                  style: TextStyle(
+                                    color: GlassColors.textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Download tracks from now playing to see them here.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: GlassColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.only(top: 8, bottom: 120),
+                          itemCount: _songs.length,
+                          itemBuilder: (context, index) {
+                            final song = _songs[index];
+                            return SongTile(
+                              title: song.title,
+                              artist: song.artist,
+                              albumArtUrl: song.albumArtUrl,
+                              heroTag: 'art-${song.id}',
+                              onTap: () => _playSong(index),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

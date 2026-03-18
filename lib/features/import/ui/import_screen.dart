@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/di.dart';
-import 'package:tune_bridge/core/neumorphic.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/spotify_public_service.dart';
+import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({super.key});
@@ -29,9 +29,13 @@ class _ImportScreenState extends State<ImportScreen> {
       
       // Basic type detection
       String type = 'unknown';
-      if (url.contains('track')) type = 'track';
-      else if (url.contains('playlist')) type = 'playlist';
-      else if (url.contains('album')) type = 'album';
+      if (url.contains('track')) {
+        type = 'track';
+      } else if (url.contains('playlist')) {
+        type = 'playlist';
+      } else if (url.contains('album')) {
+        type = 'album';
+      }
 
       if (type == 'track') {
         final id = url.split('track/').last.split('?').first;
@@ -81,121 +85,134 @@ class _ImportScreenState extends State<ImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Neumorphic.background,
-      appBar: AppBar(
-        backgroundColor: Neumorphic.background,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'IMPORT',
-          style: GoogleFonts.splineSans(
-            color: Neumorphic.textDark,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-          ),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_rounded, color: Neumorphic.textMedium),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Container(
-              width: 120,
-              height: 120,
-              decoration: Neumorphic.raised(
-                radius: 60,
-                blurRadius: 20,
-                offset: const Offset(10, 10),
+      backgroundColor: GlassColors.background,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: GlassColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Import',
+                    style: GoogleFonts.splineSans(
+                      color: GlassColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 28,
+                    ),
+                  ),
+                ],
               ),
-              child: Icon(
-                Icons.cloud_download_rounded,
-                size: 50,
-                color: Neumorphic.accent,
-              ),
-            ),
-            const SizedBox(height: 40),
-            Text(
-              'Import from Spotify',
-              style: GoogleFonts.splineSans(
-                color: Neumorphic.textDark,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Paste a Spotify playlist or song link below to add it to your library.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.splineSans(
-                color: Neumorphic.textMedium,
-                fontSize: 15,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // Text Field Container
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              decoration: Neumorphic.inset(
-                radius: 16,
-                blurRadius: 8,
-                offset: const Offset(3, 3),
-              ),
-              child: TextField(
-                controller: _controller,
-                style: GoogleFonts.splineSans(color: Neumorphic.textDark, fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'https://open.spotify.com/...',
-                  hintStyle: GoogleFonts.splineSans(color: Neumorphic.textMedium),
-                  border: InputBorder.none,
-                  icon: Icon(Icons.link, color: Neumorphic.accent),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // Import Button
-            GestureDetector(
-              onTap: _isLoading ? null : _onImport,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                decoration: Neumorphic.raised(
-                  radius: 16,
-                  color: Neumorphic.accent,
-                  blurRadius: 16,
-                  offset: const Offset(6, 6),
-                ),
-                child: Center(
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+              const SizedBox(height: 12),
+              GlassPanel(
+                blur: 10,
+                borderRadius: BorderRadius.circular(24),
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        color: const Color(0x3300D7FF),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0x5500D7FF)),
+                      ),
+                      child: const Icon(
+                        Icons.cloud_download_rounded,
+                        size: 40,
+                        color: GlassColors.accent,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Import from Spotify',
+                      style: GoogleFonts.splineSans(
+                        color: GlassColors.textPrimary,
+                        fontSize: 21,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Paste a Spotify track, album, or playlist link to add it to your local library.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.splineSans(
+                        color: GlassColors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    GlassPanel(
+                      blur: 0,
+                      borderRadius: BorderRadius.circular(14),
+                      color: const Color(0x33182330),
+                      borderColor: const Color(0x22FFFFFF),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: TextField(
+                        controller: _controller,
+                        style: GoogleFonts.splineSans(
+                          color: GlassColors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'https://open.spotify.com/...',
+                          hintStyle: GoogleFonts.splineSans(
+                            color: GlassColors.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
-                        )
-                      : Text(
-                          'IMPORT',
-                          style: GoogleFonts.splineSans(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
+                          border: InputBorder.none,
+                          prefixIcon: const Icon(Icons.link_rounded, color: GlassColors.accent),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _onImport,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: GlassColors.accent,
+                          foregroundColor: const Color(0xFF041118),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF041118),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Import',
+                                style: GoogleFonts.splineSans(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

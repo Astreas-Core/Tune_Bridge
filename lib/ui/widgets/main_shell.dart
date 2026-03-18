@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tune_bridge/core/neumorphic.dart';
 import 'package:tune_bridge/core/theme_cubit.dart';
 import 'package:tune_bridge/features/home/ui/home_screen.dart';
 import 'package:tune_bridge/features/library/ui/library_screen.dart';
+import 'package:tune_bridge/features/search/ui/search_screen.dart';
+import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 import 'package:tune_bridge/ui/widgets/mini_player.dart';
 
 class MainShell extends StatefulWidget {
@@ -36,57 +37,50 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch ThemeCubit to force rebuild
     context.watch<ThemeCubit>();
 
-    final screens = [
+    const screens = [
       HomeScreen(),
+      SearchScreen(),
       LibraryScreen(),
     ];
 
     return Scaffold(
-      backgroundColor: Neumorphic.background,
+      backgroundColor: GlassColors.background,
       body: Stack(
         children: [
-          // Main Content
           PageView(
             controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(), // Disable swipe to change tab
+            physics: const NeverScrollableScrollPhysics(),
             children: screens,
           ),
-          
-          // Mini Player (Positioned above bottom nav)
-          // Adjust bottom padding based on nav bar height + safe area
+
           Positioned(
             left: 0,
             right: 0,
-            bottom: 80 + MediaQuery.of(context).padding.bottom, // Height of nav bar
+            bottom: 76 + MediaQuery.of(context).padding.bottom,
             child: const MiniPlayer(),
           ),
 
-          // Bottom Navigation
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              height: 70 + MediaQuery.of(context).padding.bottom,
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-              decoration: BoxDecoration(
-                color: Neumorphic.background.withValues(alpha: 0.95), // Slight transparency
-                boxShadow: [
-                  BoxShadow(
-                    color: Neumorphic.shadowDark.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
+            left: 12,
+            right: 12,
+            bottom: 10,
+            child: GlassPanel(
+              borderRadius: BorderRadius.circular(22),
+              blur: 8,
+              color: const Color(0xAA0F131B),
+              padding: EdgeInsets.fromLTRB(
+                8,
+                8,
+                8,
+                8 + MediaQuery.of(context).padding.bottom,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(Icons.home_rounded, "Home", 0),
-                  _buildNavItem(Icons.library_music_rounded, "Library", 1),
+                  _buildNavItem(Icons.home_rounded, 'Home', 0),
+                  _buildNavItem(Icons.search_rounded, 'Search', 1),
+                  _buildNavItem(Icons.library_music_rounded, 'Library', 2),
                 ],
               ),
             ),
@@ -98,35 +92,38 @@ class _MainShellState extends State<MainShell> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () => _onItemTapped(index), // Corrected call
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(10),
-            decoration: isSelected 
-              ? Neumorphic.inset(radius: 12) // Pressed effect for selected
-              : null, // Flat for unselected
-            child: Icon(
-              icon,
-              color: isSelected ? Neumorphic.textDark : Neumorphic.textLight,
-              size: 26,
-            ),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 190),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? GlassColors.accent.withValues(alpha: 0.16) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Neumorphic.textDark : Neumorphic.textLight,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? GlassColors.accent : GlassColors.textSecondary,
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? GlassColors.textPrimary : GlassColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

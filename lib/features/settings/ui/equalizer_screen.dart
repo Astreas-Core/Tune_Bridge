@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/di.dart';
-import 'package:tune_bridge/core/neumorphic.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
+import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class EqualizerScreen extends StatefulWidget {
   const EqualizerScreen({super.key});
@@ -109,109 +110,163 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Neumorphic.background,
-      appBar: AppBar(
-        backgroundColor: Neumorphic.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_rounded, color: Neumorphic.iconColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'EQUALIZER',
-          style: TextStyle(
-            color: Neumorphic.textDark,
-            letterSpacing: 1.5,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          Switch(
-            value: _enabled,
-            activeTrackColor: Neumorphic.accent.withValues(alpha: 0.5),
-            activeThumbColor: Neumorphic.accent,
-            onChanged: _isLoading ? null : _toggleEnabled,
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: _isLoading 
-        ? Center(child: CircularProgressIndicator(color: Neumorphic.accent))
-        : Column(
-        children: [
-          const SizedBox(height: 20),
-          
-          // Preset Selector
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              children: [
-                Text('Preset:', style: TextStyle(color: Neumorphic.textMedium)),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: Neumorphic.inset(radius: 12),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedPreset,
-                        isExpanded: true,
-                        dropdownColor: Neumorphic.cardBg,
-                        icon: Icon(Icons.arrow_drop_down_rounded, color: Neumorphic.accent),
-                        style: TextStyle(
-                          color: _enabled ? Neumorphic.textDark : Neumorphic.textLight,
-                          fontWeight: FontWeight.w600,
+      backgroundColor: GlassColors.background,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: GlassColors.accent),
+              )
+            : ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: GlassColors.textPrimary,
                         ),
-                        items: _presets.keys.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                        onChanged: _enabled ? (val) {
-                          if (val != null) _applyPreset(val);
-                        } : null,
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Equalizer',
+                        style: GoogleFonts.splineSans(
+                          color: GlassColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 28,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  GlassPanel(
+                    blur: 10,
+                    borderRadius: BorderRadius.circular(18),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Enabled',
+                                style: GoogleFonts.splineSans(
+                                  color: GlassColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              Text(
+                                _enabled ? 'Sound tuning is active' : 'Sound tuning is off',
+                                style: GoogleFonts.splineSans(
+                                  color: GlassColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: _enabled,
+                          activeThumbColor: GlassColors.accent,
+                          activeTrackColor: GlassColors.accent.withValues(alpha: 0.35),
+                          onChanged: _isLoading ? null : _toggleEnabled,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          const Spacer(),
-
-          // EQ Sliders
-          if (_bands.isEmpty)
-            Expanded(
-              child: Center(
-                child: Text(
-                  'Play music to enable Equalizer',
-                  style: TextStyle(color: Neumorphic.textMedium),
-                ),
+                  const SizedBox(height: 12),
+                  GlassPanel(
+                    blur: 10,
+                    borderRadius: BorderRadius.circular(18),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.tune_rounded, color: GlassColors.accent, size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Preset',
+                          style: GoogleFonts.splineSans(
+                            color: GlassColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedPreset,
+                              isExpanded: true,
+                              borderRadius: BorderRadius.circular(14),
+                              dropdownColor: const Color(0xFF141A23),
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: GlassColors.textSecondary),
+                              style: GoogleFonts.splineSans(
+                                color: _enabled ? GlassColors.textPrimary : GlassColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              items: _presets.keys
+                                  .map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: _enabled
+                                  ? (value) {
+                                      if (value != null) _applyPreset(value);
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (_bands.isEmpty)
+                    GlassPanel(
+                      blur: 0,
+                      borderRadius: BorderRadius.circular(18),
+                      padding: const EdgeInsets.all(18),
+                      child: Text(
+                        'Play music to enable equalizer bands.',
+                        style: GoogleFonts.splineSans(
+                          color: GlassColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    )
+                  else
+                    GlassPanel(
+                      blur: 10,
+                      borderRadius: BorderRadius.circular(22),
+                      padding: const EdgeInsets.fromLTRB(8, 16, 8, 14),
+                      child: SizedBox(
+                        height: 310,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: List.generate(_bands.length, (index) {
+                            return _BandSlider(
+                              value: _bands[index],
+                              label: _bandLabels.length > index ? _bandLabels[index] : '',
+                              enabled: _enabled,
+                              onChanged: (value) => _updateBand(index, value),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            )
-          else
-            SizedBox(
-              height: 300,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(_bands.length, (index) {
-                  return _BandSlider(
-                    value: _bands[index],
-                    label: _bandLabels.length > index ? _bandLabels[index] : '',
-                    enabled: _enabled,
-                    onChanged: (val) => _updateBand(index, val),
-                  );
-                }),
-              ),
-            ),
-
-          const Spacer(),
-        ],
       ),
     );
   }
@@ -232,15 +287,28 @@ class _BandSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sliderTheme = SliderTheme.of(context).copyWith(
+      trackHeight: 5,
+      activeTrackColor:
+          enabled ? GlassColors.accent : GlassColors.textSecondary.withValues(alpha: 0.3),
+      inactiveTrackColor: const Color(0x33202A36),
+      thumbColor: enabled ? GlassColors.textPrimary : GlassColors.textSecondary,
+      overlayColor: GlassColors.accent.withValues(alpha: 0.12),
+      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8, elevation: 2),
+      trackShape: const RoundedRectSliderTrackShape(),
+    );
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Text(
           '${value > 0 ? '+' : ''}${value.toInt()}dB',
-          style: TextStyle(
-            color: enabled ? Neumorphic.textMedium : Neumorphic.textLight.withValues(alpha: 0.5),
+          style: GoogleFonts.splineSans(
+            color: enabled
+                ? GlassColors.textPrimary
+                : GlassColors.textSecondary.withValues(alpha: 0.55),
             fontSize: 12,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 16),
@@ -249,15 +317,7 @@ class _BandSlider extends StatelessWidget {
           child: RotatedBox(
             quarterTurns: 3,
             child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 6,
-                activeTrackColor: enabled ? Neumorphic.accent : Neumorphic.textLight.withValues(alpha: 0.3),
-                inactiveTrackColor: Neumorphic.insetBg,
-                thumbColor: enabled ? Neumorphic.cardBg : Neumorphic.textLight,
-                overlayColor: Neumorphic.accent.withValues(alpha: 0.1),
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10, elevation: 4),
-                trackShape: const RoundedRectSliderTrackShape(),
-              ),
+              data: sliderTheme,
               child: Slider(
                 value: value,
                 min: -15,
@@ -270,9 +330,11 @@ class _BandSlider extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           label,
-          style: TextStyle(
-            color: enabled ? Neumorphic.textDark : Neumorphic.textLight.withValues(alpha: 0.5),
-            fontSize: 12,
+          style: GoogleFonts.splineSans(
+            color: enabled
+                ? GlassColors.textPrimary
+                : GlassColors.textSecondary.withValues(alpha: 0.55),
+            fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
         ),
