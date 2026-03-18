@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/theme_cubit.dart';
 import 'package:tune_bridge/features/home/ui/home_screen.dart';
 import 'package:tune_bridge/features/library/ui/library_screen.dart';
@@ -49,38 +50,57 @@ class _MainShellState extends State<MainShell> {
       backgroundColor: GlassColors.background,
       body: Stack(
         children: [
-          PageView(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            children: screens,
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF040404), Color(0xFF0A0A0D), Color(0xFF040404)],
+              ),
+            ),
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: screens,
+            ),
           ),
 
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 76 + MediaQuery.of(context).padding.bottom,
-            child: const MiniPlayer(),
-          ),
-
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 10,
+            left: 10,
+            right: 10,
+            bottom: 6,
             child: GlassPanel(
-              borderRadius: BorderRadius.circular(22),
-              blur: 8,
-              color: const Color(0xAA0F131B),
+              borderRadius: BorderRadius.circular(24),
+              blur: 0,
+              color: const Color(0xCC171717),
+              borderColor: const Color(0x2200FF41),
               padding: EdgeInsets.fromLTRB(
                 8,
                 8,
                 8,
-                8 + MediaQuery.of(context).padding.bottom,
+                6 + MediaQuery.of(context).padding.bottom,
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildNavItem(Icons.home_rounded, 'Home', 0),
-                  _buildNavItem(Icons.search_rounded, 'Search', 1),
-                  _buildNavItem(Icons.library_music_rounded, 'Library', 2),
+                  const MiniPlayer(
+                    embedded: true,
+                    margin: EdgeInsets.zero,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    color: const Color(0x22FFFFFF),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _buildNavItem(Icons.home_rounded, 'Home', 0),
+                      _buildNavItem(Icons.search_rounded, 'Search', 1),
+                      _buildNavItem(Icons.library_music_rounded, 'Library', 2),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -99,26 +119,29 @@ class _MainShellState extends State<MainShell> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 190),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? GlassColors.accent.withValues(alpha: 0.16) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            color: isSelected
+                ? const Color(0xFF353535)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                color: isSelected ? GlassColors.accent : GlassColors.textSecondary,
-                size: 24,
+                color: isSelected ? const Color(0xFFEBFFE2) : const Color(0xFFB9CCB2),
+                size: 22,
               ),
               const SizedBox(height: 4),
               Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? GlassColors.textPrimary : GlassColors.textSecondary,
-                  fontSize: 11,
+                label.toUpperCase(),
+                style: GoogleFonts.inter(
+                  color: isSelected ? const Color(0xFFEBFFE2) : const Color(0xFFB9CCB2),
+                  fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 0.6,
                 ),
               ),
             ],

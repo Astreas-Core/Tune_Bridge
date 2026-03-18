@@ -1,16 +1,15 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class GlassColors {
   GlassColors._();
 
-  static const Color background = Color(0xFF0B0B0F);
-  static const Color surface = Color(0xFF11141A);
-  static const Color textPrimary = Color(0xFFEAEAEA);
-  static const Color textSecondary = Color(0xFFADB3C2);
-  static const Color accent = Color(0xFF00D7FF);
-  static const Color accentMuted = Color(0xFF00B7D4);
+  static const Color background = Color(0xFF050505);
+  static const Color surface = Color(0xFF0C0C0E);
+  static const Color surfaceRaised = Color(0xFF141419);
+  static const Color textPrimary = Color(0xFFF4F4F5);
+  static const Color textSecondary = Color(0xFF9A9AA3);
+  static const Color accent = Color(0xFF2AE6C9);
+  static const Color accentMuted = Color(0xFF1AB49E);
 }
 
 class GlassPanel extends StatelessWidget {
@@ -33,31 +32,33 @@ class GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final panel = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: borderRadius,
-        border: Border.all(color: borderColor),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x55000000),
-            blurRadius: 24,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: child,
-    );
-
     return ClipRRect(
       borderRadius: borderRadius,
-      child: blur > 0
-          ? BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-              child: panel,
-            )
-          : panel,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF101015), Color(0xFF0A0A0D)],
+          ),
+        ),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: borderRadius,
+            border: Border.all(color: borderColor),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x66000000),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }
@@ -84,10 +85,14 @@ class GlassIconButton extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: isActive ? GlassColors.accent.withValues(alpha: 0.18) : const Color(0x2219202A),
+          color: isActive
+              ? GlassColors.accent.withValues(alpha: 0.18)
+              : GlassColors.surfaceRaised,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isActive ? GlassColors.accent.withValues(alpha: 0.55) : const Color(0x22FFFFFF),
+            color: isActive
+                ? GlassColors.accent.withValues(alpha: 0.55)
+                : const Color(0x26FFFFFF),
           ),
         ),
         child: Icon(

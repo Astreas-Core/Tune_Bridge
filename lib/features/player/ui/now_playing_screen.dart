@@ -8,6 +8,7 @@ import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
 import 'package:tune_bridge/features/player/bloc/player_state.dart' as ps;
+import 'package:tune_bridge/features/settings/ui/equalizer_screen.dart';
 import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class NowPlayingScreen extends StatefulWidget {
@@ -116,7 +117,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0B0B0F), Color(0xFF111A23), Color(0xFF0B0B0F)],
+                  colors: [Color(0xFF0E0E0E), Color(0xFF131313), Color(0xFF0E0E0E)],
                 ),
               ),
               child: SafeArea(
@@ -139,7 +140,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                               children: [
                                 Text(
                                   'Now Playing',
-                                  style: GoogleFonts.splineSans(
+                                  style: GoogleFonts.inter(
                                     color: GlassColors.textSecondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -150,7 +151,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                   track.albumName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.splineSans(
+                                  style: GoogleFonts.inter(
                                     color: GlassColors.textPrimary,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -236,7 +237,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                         track.title,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.splineSans(
+                                        style: GoogleFonts.inter(
                                           color: GlassColors.textPrimary,
                                           fontSize: 23,
                                           fontWeight: FontWeight.w700,
@@ -247,7 +248,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                         track.artist,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.splineSans(
+                                        style: GoogleFonts.inter(
                                           color: GlassColors.textSecondary,
                                           fontSize: 15,
                                           fontWeight: FontWeight.w500,
@@ -339,7 +340,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                             _formatDuration(
                                               Duration(seconds: sliderValue.toInt()),
                                             ),
-                                            style: GoogleFonts.splineSans(
+                                            style: GoogleFonts.inter(
                                               color: GlassColors.textSecondary,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
@@ -349,7 +350,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                             _formatDuration(
                                               Duration(seconds: durationSeconds),
                                             ),
-                                            style: GoogleFonts.splineSans(
+                                            style: GoogleFonts.inter(
                                               color: GlassColors.textSecondary,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
@@ -414,11 +415,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                 _BottomLabelButton(
                                   icon: Icons.graphic_eq_rounded,
                                   label: 'EQ',
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Equalizer support is coming soon')),
-                                    );
-                                  },
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const EqualizerScreen(),
+                                    ),
+                                  ),
                                 ),
                                 _BottomLabelButton(
                                   icon: Icons.nightlight_round,
@@ -480,7 +482,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 ),
                 Text(
                   'Queue',
-                  style: GoogleFonts.splineSans(
+                  style: GoogleFonts.inter(
                     color: GlassColors.textPrimary,
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
@@ -514,7 +516,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.splineSans(
+                          style: GoogleFonts.inter(
                             color:
                                 isCurrent ? GlassColors.accent : GlassColors.textPrimary,
                             fontWeight:
@@ -525,7 +527,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                           item.artist,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.splineSans(
+                          style: GoogleFonts.inter(
                             color: GlassColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -569,7 +571,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
             children: [
               Text(
                 'Sleep Timer',
-                style: GoogleFonts.splineSans(
+                style: GoogleFonts.inter(
                   color: GlassColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -580,7 +582,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 ListTile(
                   title: Text(
                     option,
-                    style: GoogleFonts.splineSans(color: GlassColors.textPrimary),
+                    style: GoogleFonts.inter(color: GlassColors.textPrimary),
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -613,7 +615,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 track.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.splineSans(
+                style: GoogleFonts.inter(
                   color: GlassColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -622,7 +624,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
               const SizedBox(height: 10),
               ListTile(
                 leading: const Icon(Icons.share_rounded, color: GlassColors.textPrimary),
-                title: Text('Share', style: GoogleFonts.splineSans(color: GlassColors.textPrimary)),
+                title: Text('Share', style: GoogleFonts.inter(color: GlassColors.textPrimary)),
                 onTap: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -632,12 +634,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.album_rounded, color: GlassColors.textPrimary),
-                title: Text('View album', style: GoogleFonts.splineSans(color: GlassColors.textPrimary)),
+                title: Text('View album', style: GoogleFonts.inter(color: GlassColors.textPrimary)),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline_rounded, color: GlassColors.textPrimary),
-                title: Text('Song details', style: GoogleFonts.splineSans(color: GlassColors.textPrimary)),
+                title: Text('Song details', style: GoogleFonts.inter(color: GlassColors.textPrimary)),
                 onTap: () {
                   Navigator.pop(context);
                   showDialog(
@@ -646,11 +648,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                       backgroundColor: const Color(0xFF121922),
                       title: Text(
                         track.title,
-                        style: GoogleFonts.splineSans(color: GlassColors.textPrimary),
+                        style: GoogleFonts.inter(color: GlassColors.textPrimary),
                       ),
                       content: Text(
                         'Artist: ${track.artist}\nAlbum: ${track.albumName}',
-                        style: GoogleFonts.splineSans(color: GlassColors.textSecondary),
+                        style: GoogleFonts.inter(color: GlassColors.textSecondary),
                       ),
                     ),
                   );
@@ -734,7 +736,7 @@ class _PlayButton extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF13D6FF), Color(0xFF00AFC8)],
+            colors: [Color(0xFF00FF41), Color(0xFF00E639)],
           ),
           boxShadow: [
             BoxShadow(
@@ -746,7 +748,7 @@ class _PlayButton extends StatelessWidget {
         ),
         child: Icon(
           isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          color: const Color(0xFF03131A),
+          color: const Color(0xFF003907),
           size: 42,
         ),
       ),
@@ -772,7 +774,7 @@ class _BottomLabelButton extends StatelessWidget {
       icon: Icon(icon, size: 18, color: GlassColors.textSecondary),
       label: Text(
         label,
-        style: GoogleFonts.splineSans(
+        style: GoogleFonts.inter(
           color: GlassColors.textSecondary,
           fontSize: 12,
           fontWeight: FontWeight.w600,

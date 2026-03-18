@@ -15,3 +15,12 @@ class SearchQueryChanged extends SearchEvent {
   @override
   List<Object?> get props => [query];
 }
+
+class SearchQueryCommitted extends SearchEvent {
+  final String query;
+
+  const SearchQueryCommitted(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}

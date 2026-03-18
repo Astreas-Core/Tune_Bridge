@@ -9,13 +9,17 @@ import 'package:tune_bridge/features/search/bloc/search_state.dart';
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final YouTubeService _youtubeService;
   late final Box _box;
+  static const _historyKey = 'search_history';
 
-  SearchBloc(this._youtubeService) : super(const SearchInitial(const [])) {
+  SearchBloc(this._youtubeService) : super(const SearchInitial([])) {
     // Open box if needed, or assume open. main() opens it.
     _box = Hive.box(AppConstants.settingsBox);
-    
+
     on<SearchQueryChanged>(_onQueryChanged);
-    
+    on<SearchQueryCommitted>(_onQueryCommitted);
+
+    _sanitizeAndPersistHistory();
+
     // Initial load
     add(const SearchQueryChanged(''));
   }
@@ -36,31 +40,75 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     try {
       final results = await _youtubeService.search(query);
-      if (results.isNotEmpty) {
-        _addToHistory(query);
-      }
       emit(SearchLoaded(results));
     } catch (e) {
       emit(SearchError(e.toString()));
     }
   }
 
+  Future<void> _onQueryCommitted(
+    SearchQueryCommitted event,
+    Emitter<SearchState> emit,
+  ) async {
+    final query = event.query.trim();
+    if (query.length < 2) return;
+    _addToHistory(query);
+  }
+
   List<String> _getHistory() {
-    final dynamic raw = _box.get('search_history', defaultValue: []);
+    final dynamic raw = _box.get(_historyKey, defaultValue: []);
     if (raw is List) {
-      return raw.cast<String>().toList();
+      return raw.cast<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     }
     return [];
   }
 
   void _addToHistory(String query) {
     if (query.length < 2) return;
+    final normalized = _normalize(query);
+    if (normalized.isEmpty) return;
+
     final List<String> history = List<String>.from(_getHistory());
-    history.remove(query); // Remove existing to move to top
-    history.insert(0, query); // Add to top
-    if (history.length > 10) {
-      history.removeLast(); // Keep max 10
+    history.removeWhere((h) => _normalize(h) == normalized);
+    history.insert(0, query);
+
+    final cleaned = _compressPrefixFlood(history);
+    final trimmed = cleaned.take(10).toList(growable: false);
+
+    _box.put(_historyKey, trimmed);
+  }
+
+  void _sanitizeAndPersistHistory() {
+    final current = _getHistory();
+    final cleaned = _compressPrefixFlood(current).take(10).toList(growable: false);
+    _box.put(_historyKey, cleaned);
+  }
+
+  List<String> _compressPrefixFlood(List<String> input) {
+    final filtered = input.where((e) => e.trim().length >= 2).toList(growable: false);
+    final output = <String>[];
+
+    for (final candidate in filtered) {
+      final cNorm = _normalize(candidate);
+      if (cNorm.isEmpty) continue;
+
+      final hasLongerVariant = filtered.any((other) {
+        final oNorm = _normalize(other);
+        return oNorm.length > cNorm.length && oNorm.startsWith(cNorm);
+      });
+
+      if (hasLongerVariant) continue;
+
+      final exists = output.any((saved) => _normalize(saved) == cNorm);
+      if (!exists) {
+        output.add(candidate);
+      }
     }
-    _box.put('search_history', history);
+
+    return output;
+  }
+
+  String _normalize(String query) {
+    return query.trim().toLowerCase();
   }
 }

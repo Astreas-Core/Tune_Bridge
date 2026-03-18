@@ -9,6 +9,8 @@ import 'package:tune_bridge/core/models/playlist_model.dart';
 /// Uses __NEXT_DATA__ JSON from embed pages — no API calls needed.
 class SpotifyPublicService {
   final Logger _log = Logger();
+  static const Duration _requestTimeout = Duration(seconds: 12);
+  static const int _artworkConcurrency = 8;
 
   static const _userAgent =
       'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 '
@@ -47,7 +49,7 @@ class SpotifyPublicService {
       'Accept':
           'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
-    });
+    }).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -84,7 +86,7 @@ class SpotifyPublicService {
     final res = await http.get(Uri.parse(url), headers: {
       'User-Agent': _userAgent,
       'Accept': 'application/json',
-    });
+    }).timeout(_requestTimeout);
     if (res.statusCode == 200) {
       final json = jsonDecode(res.body) as Map<String, dynamic>;
       return (
@@ -195,33 +197,106 @@ class SpotifyPublicService {
     }
   }
 
-  Future<List<TrackModel>> getPlaylistTracks(String id) async {
+  Future<List<TrackModel>> getPlaylistTracks(
+    String id, {
+    void Function(int completed, int total)? onProgress,
+  }) async {
     final entity = await _fetchEntity('playlist', id);
     final trackList = entity['trackList'] as List<dynamic>? ?? [];
     final coverArt = entity['coverArt']?['sources'] as List<dynamic>? ?? [];
     final playlistImageUrl = _getLargestImageUrl(coverArt);
+    final artworkCache = <String, String?>{};
+    final tracks = List<TrackModel?>.filled(trackList.length, null, growable: false);
+    var completed = 0;
+    onProgress?.call(completed, trackList.length);
 
-    final tracks = <TrackModel>[];
-    for (final item in trackList) {
-      final t = item as Map<String, dynamic>;
-      final uri = t['uri'] as String? ?? '';
-      final trackId = uri.contains(':') ? uri.split(':').last : 'embed_${tracks.length}';
+    for (var i = 0; i < trackList.length; i += _artworkConcurrency) {
+      final end = (i + _artworkConcurrency > trackList.length)
+          ? trackList.length
+          : i + _artworkConcurrency;
 
-      tracks.add(TrackModel(
-        id: trackId,
-        title: t['title'] as String? ?? 'Unknown',
-        artist: t['subtitle'] as String? ?? 'Unknown',
-        albumName: '',
-        albumArtUrl: playlistImageUrl,
-        durationMs: t['duration'] as int? ?? 0,
-      ));
+      final futures = <Future<void>>[];
+      for (var idx = i; idx < end; idx++) {
+        futures.add(() async {
+          final t = trackList[idx] as Map<String, dynamic>;
+          final uri = t['uri'] as String? ?? '';
+          final trackId = uri.contains(':') ? uri.split(':').last : 'embed_$idx';
+
+          final embeddedTrackArt = _extractTrackImageFromEmbedItem(t);
+          final trackArtwork = embeddedTrackArt ??
+              await _resolveTrackArtwork(
+                trackId,
+                cache: artworkCache,
+                fallbackUrl: playlistImageUrl,
+              );
+
+          tracks[idx] = TrackModel(
+            id: trackId,
+            title: t['title'] as String? ?? 'Unknown',
+            artist: t['subtitle'] as String? ?? 'Unknown',
+            albumName: '',
+            albumArtUrl: trackArtwork,
+            durationMs: t['duration'] as int? ?? 0,
+          );
+          completed += 1;
+          onProgress?.call(completed, trackList.length);
+        }());
+      }
+      await Future.wait(futures);
     }
 
-    _log.i('Parsed ${tracks.length} tracks from embed page');
-    if (tracks.isEmpty) {
+    final resolvedTracks = tracks
+        .whereType<TrackModel>()
+        .toList(growable: false);
+
+    _log.i('Parsed ${resolvedTracks.length} tracks from embed page');
+    if (resolvedTracks.isEmpty) {
       throw Exception('No tracks found in playlist');
     }
-    return tracks;
+    return resolvedTracks;
+  }
+
+  Future<String?> _resolveTrackArtwork(
+    String trackId, {
+    required Map<String, String?> cache,
+    String? fallbackUrl,
+  }) async {
+    if (cache.containsKey(trackId)) {
+      return cache[trackId] ?? fallbackUrl;
+    }
+
+    try {
+      final oembed = await _fetchOembed('track', trackId);
+      final thumbnail = oembed.thumbnailUrl;
+      cache[trackId] = thumbnail;
+      return thumbnail ?? fallbackUrl;
+    } catch (_) {
+      cache[trackId] = null;
+      return fallbackUrl;
+    }
+  }
+
+  String? _extractTrackImageFromEmbedItem(Map<String, dynamic> item) {
+    final direct = item['imageUrl'] as String? ?? item['image_url'] as String?;
+    if (direct != null && direct.isNotEmpty) return direct;
+
+    final images = item['images'];
+    if (images is List && images.isNotEmpty) {
+      final image = images.first;
+      if (image is Map<String, dynamic>) {
+        final url = image['url'] as String?;
+        if (url != null && url.isNotEmpty) return url;
+      }
+    }
+
+    final coverArt = item['coverArt'];
+    if (coverArt is Map<String, dynamic>) {
+      final sources = coverArt['sources'] as List<dynamic>?;
+      final url = _getLargestImageUrl(sources);
+      if (url != null && url.isNotEmpty) return url;
+    }
+
+    return null;
   }
 
   // ── Album import ─────────────────────────────────────────────
@@ -257,7 +332,10 @@ class SpotifyPublicService {
     }
   }
 
-  Future<List<TrackModel>> getAlbumTracks(String id) async {
+  Future<List<TrackModel>> getAlbumTracks(
+    String id, {
+    void Function(int completed, int total)? onProgress,
+  }) async {
     final entity = await _fetchEntity('album', id);
     final trackList = entity['trackList'] as List<dynamic>? ?? [];
     final coverArt = entity['coverArt']?['sources'] as List<dynamic>? ?? [];
@@ -266,6 +344,8 @@ class SpotifyPublicService {
         entity['title'] as String? ?? '';
 
     final tracks = <TrackModel>[];
+    var completed = 0;
+    onProgress?.call(completed, trackList.length);
     for (final item in trackList) {
       final t = item as Map<String, dynamic>;
       final uri = t['uri'] as String? ?? '';
@@ -279,6 +359,8 @@ class SpotifyPublicService {
         albumArtUrl: albumImageUrl,
         durationMs: t['duration'] as int? ?? 0,
       ));
+      completed += 1;
+      onProgress?.call(completed, trackList.length);
     }
 
     _log.i('Parsed ${tracks.length} album tracks from embed');

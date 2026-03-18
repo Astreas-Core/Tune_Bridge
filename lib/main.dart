@@ -12,7 +12,6 @@ import 'package:tune_bridge/core/services/audio_player_service.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/core/theme.dart';
-import 'package:tune_bridge/core/neumorphic.dart';
 import 'package:tune_bridge/core/theme_cubit.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
 
@@ -64,21 +63,19 @@ class TuneBridgeApp extends StatelessWidget {
           create: (_) => PlayerBloc(
             getIt<AudioPlayerService>(),
             getIt<YouTubeService>(),
+            getIt<LocalLibraryService>(),
           ),
         ),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, themeMode) {
-          // Sync static theme helper with Cubit state
-          Neumorphic.setIsDark(themeMode == ThemeMode.dark);
-
+        builder: (context, _) {
           return MaterialApp(
             title: AppConstants.appName,
             debugShowCheckedModeBanner: false,
-            themeMode: themeMode,
-            theme: AppTheme.lightTheme, // Renamed getter
+            themeMode: ThemeMode.dark,
+            theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeAnimationDuration: const Duration(milliseconds: 500),
+            themeAnimationDuration: Duration.zero,
             initialRoute: AppRoutes.splash,
             onGenerateRoute: AppRoutes.onGenerateRoute,
           );

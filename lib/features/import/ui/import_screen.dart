@@ -15,19 +15,22 @@ class ImportScreen extends StatefulWidget {
 class _ImportScreenState extends State<ImportScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
+  double _progress = 0;
+  String _progressLabel = '';
 
-  void _onImport() async {
+  Future<void> _onImport() async {
     final url = _controller.text.trim();
     if (url.isEmpty) return;
 
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-
+    setState(() {
+      _isLoading = true;
+      _progress = 0;
+      _progressLabel = 'Starting import...';
+    });
     try {
       final service = getIt<SpotifyPublicService>();
       final library = getIt<LocalLibraryService>();
-      
-      // Basic type detection
+
       String type = 'unknown';
       if (url.contains('track')) {
         type = 'track';
@@ -43,34 +46,56 @@ class _ImportScreenState extends State<ImportScreen> {
         await library.addLikedSong(track);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Added "${track.title}" to Liked Songs')),
+            SnackBar(content: Text('Added ${track.title} to Liked Songs')),
           );
         }
       } else if (type == 'playlist') {
         final id = url.split('playlist/').last.split('?').first;
+        setState(() => _progressLabel = 'Fetching playlist info...');
         final info = await service.getPlaylistInfo(id);
-        final tracks = await service.getPlaylistTracks(id);
+        setState(() => _progressLabel = 'Importing tracks...');
+        final tracks = await service.getPlaylistTracks(
+          id,
+          onProgress: (completed, total) {
+            if (!mounted) return;
+            setState(() {
+              _progress = total == 0 ? 0 : completed / total;
+              _progressLabel = 'Importing tracks... $completed/$total';
+            });
+          },
+        );
+        setState(() => _progressLabel = 'Saving playlist...');
         await library.savePlaylist(info, tracks);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Imported playlist "${info.name}" (${tracks.length} tracks)')),
+            SnackBar(content: Text('Imported playlist ${info.name} (${tracks.length} tracks)')),
           );
         }
       } else if (type == 'album') {
         final id = url.split('album/').last.split('?').first;
+        setState(() => _progressLabel = 'Fetching album info...');
         final info = await service.getAlbumInfo(id);
-        final tracks = await service.getAlbumTracks(id);
+        setState(() => _progressLabel = 'Importing tracks...');
+        final tracks = await service.getAlbumTracks(
+          id,
+          onProgress: (completed, total) {
+            if (!mounted) return;
+            setState(() {
+              _progress = total == 0 ? 0 : completed / total;
+              _progressLabel = 'Importing tracks... $completed/$total';
+            });
+          },
+        );
+        setState(() => _progressLabel = 'Saving album...');
         await library.savePlaylist(info, tracks);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Imported album "${info.name}" (${tracks.length} tracks)')),
+            SnackBar(content: Text('Imported album ${info.name} (${tracks.length} tracks)')),
           );
         }
       } else {
-        throw Exception('Could not determine import type. Please use a valid Spotify link.');
+        throw Exception('Could not determine import type from URL');
       }
-      
-      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,139 +103,141 @@ class _ImportScreenState extends State<ImportScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _progress = 0;
+          _progressLabel = '';
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: const Color(0xFF131313),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: GlassColors.textPrimary,
-                    ),
+                    icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
                   ),
-                  const SizedBox(width: 8),
                   Text(
-                    'Import',
-                    style: GoogleFonts.splineSans(
-                      color: GlassColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 28,
+                    'Import Local Files',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF00FF41),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              GlassPanel(
-                blur: 10,
-                borderRadius: BorderRadius.circular(24),
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B1B1B),
+                  borderRadius: BorderRadius.circular(12),
+                  border: const Border(
+                    left: BorderSide(color: Color(0xFF00FF41), width: 3),
+                  ),
+                ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: const Color(0x3300D7FF),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0x5500D7FF)),
-                      ),
-                      child: const Icon(
-                        Icons.cloud_download_rounded,
-                        size: 40,
-                        color: GlassColors.accent,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                     Text(
-                      'Import from Spotify',
-                      style: GoogleFonts.splineSans(
+                      'Folder Permissions',
+                      style: GoogleFonts.inter(
                         color: GlassColors.textPrimary,
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
-                      'Paste a Spotify track, album, or playlist link to add it to your local library.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.splineSans(
-                        color: GlassColors.textSecondary,
-                        fontSize: 13,
+                      'Paste a Spotify track, album, or playlist URL below to import.',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFFB9CCB2),
                         fontWeight: FontWeight.w500,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    GlassPanel(
-                      blur: 0,
-                      borderRadius: BorderRadius.circular(14),
-                      color: const Color(0x33182330),
-                      borderColor: const Color(0x22FFFFFF),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: TextField(
-                        controller: _controller,
-                        style: GoogleFonts.splineSans(
-                          color: GlassColors.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'https://open.spotify.com/...',
-                          hintStyle: GoogleFonts.splineSans(
-                            color: GlassColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          border: InputBorder.none,
-                          prefixIcon: const Icon(Icons.link_rounded, color: GlassColors.accent),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _onImport,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: GlassColors.accent,
-                          foregroundColor: const Color(0xFF041118),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF041118),
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                'Import',
-                                style: GoogleFonts.splineSans(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
-                              ),
+                        fontSize: 13,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F1F1F),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: TextField(
+                  controller: _controller,
+                  style: GoogleFonts.inter(color: GlassColors.textPrimary, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'https://open.spotify.com/...',
+                    hintStyle: GoogleFonts.inter(color: const Color(0xFFB9CCB2)),
+                    prefixIcon: const Icon(Icons.link_rounded, color: Color(0xFF00E639)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _onImport,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF003907)),
+                        )
+                      : const Icon(Icons.download_for_offline_rounded),
+                  label: Text(_isLoading ? 'IMPORTING...' : 'IMPORT SELECTED'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FF41),
+                    foregroundColor: const Color(0xFF003907),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    textStyle: GoogleFonts.inter(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+              if (_isLoading) ...[
+                const SizedBox(height: 14),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: _progress == 0 ? null : _progress,
+                    minHeight: 8,
+                    backgroundColor: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF00FF41),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _progressLabel,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFB9CCB2),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

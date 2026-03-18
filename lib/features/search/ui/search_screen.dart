@@ -12,7 +12,6 @@ import 'package:tune_bridge/features/search/bloc/search_bloc.dart';
 import 'package:tune_bridge/features/search/bloc/search_event.dart';
 import 'package:tune_bridge/features/search/bloc/search_state.dart';
 import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
-import 'package:tune_bridge/ui/widgets/song_tile.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -20,21 +19,21 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SearchBloc(getIt<YouTubeService>()),
-      child: const _SearchContent(),
+      create: (_) => SearchBloc(getIt<YouTubeService>()),
+      child: const _SearchView(),
     );
   }
 }
 
-class _SearchContent extends StatefulWidget {
-  const _SearchContent();
+class _SearchView extends StatefulWidget {
+  const _SearchView();
 
   @override
-  State<_SearchContent> createState() => _SearchContentState();
+  State<_SearchView> createState() => _SearchViewState();
 }
 
-class _SearchContentState extends State<_SearchContent> {
-  final _controller = TextEditingController();
+class _SearchViewState extends State<_SearchView> {
+  final TextEditingController _controller = TextEditingController();
   Timer? _debounce;
 
   @override
@@ -44,10 +43,10 @@ class _SearchContentState extends State<_SearchContent> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
+  void _onChanged(String query) {
     if (mounted) setState(() {});
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 260), () {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
       if (mounted) {
         context.read<SearchBloc>().add(SearchQueryChanged(query.trim()));
       }
@@ -57,51 +56,52 @@ class _SearchContentState extends State<_SearchContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: const Color(0xFF0E0E0E),
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GlassColors.textPrimary),
+                    icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
                   ),
                   Expanded(
-                    child: GlassPanel(
-                      borderRadius: BorderRadius.circular(16),
-                      blur: 8,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: TextField(
                         controller: _controller,
-                        autofocus: true,
-                        onChanged: _onSearchChanged,
-                        style: GoogleFonts.splineSans(
-                          color: GlassColors.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        onChanged: _onChanged,
+                        onSubmitted: (value) {
+                          context.read<SearchBloc>().add(SearchQueryCommitted(value));
+                        },
                         textInputAction: TextInputAction.search,
+                        style: GoogleFonts.inter(
+                          color: GlassColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
                         decoration: InputDecoration(
-                          hintText: 'Search songs, artists, albums',
-                          hintStyle: GoogleFonts.splineSans(
-                            color: GlassColors.textSecondary,
-                            fontSize: 14,
-                          ),
                           border: InputBorder.none,
-                          prefixIcon: const Icon(Icons.search_rounded, color: GlassColors.textSecondary),
+                          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF00E639)),
+                          hintText: 'Artists, songs, or playlists',
+                          hintStyle: GoogleFonts.inter(
+                            color: const Color(0xFFB9CCB2),
+                            fontWeight: FontWeight.w500,
+                          ),
                           suffixIcon: _controller.text.isEmpty
                               ? null
                               : IconButton(
-                                  icon: const Icon(Icons.clear_rounded, color: GlassColors.textSecondary),
                                   onPressed: () {
-                                    setState(() {
-                                      _controller.clear();
-                                    });
-                                    context.read<SearchBloc>().add(const SearchQueryChanged(''));
+                                    _controller.clear();
+                                    _onChanged('');
                                   },
+                                  icon: const Icon(Icons.close_rounded, color: Color(0xFFB9CCB2)),
                                 ),
                         ),
                       ),
@@ -110,77 +110,94 @@ class _SearchContentState extends State<_SearchContent> {
                 ],
               ),
             ),
-            Expanded(child: BlocBuilder<SearchBloc, SearchState>(
-        builder: (context, state) {
-          if (state is SearchLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: GlassColors.accent),
-            );
-          }
-          if (state is SearchError) {
-            return _MessageView(text: state.message);
-          }
-          if (state is SearchLoaded) {
-            if (state.results.isEmpty) {
-              return const _MessageView(text: 'No results found');
-            }
-            return ListView.builder(
-              key: const ValueKey('search-loaded'),
-              padding: const EdgeInsets.only(top: 6, bottom: 120),
-              itemCount: state.results.length,
-              itemBuilder: (context, index) {
-                final track = state.results[index];
-                return SongTile(
-                  title: track.title,
-                  artist: track.artist,
-                  albumArtUrl: track.albumArtUrl,
-                  heroTag: 'art-${track.id}',
-                  onTap: () {
-                    context.read<PlayerBloc>().add(PlayerPlayTrack(
-                      track: track,
-                      queue: state.results,
-                      queueIndex: index,
-                    ));
-                    Navigator.pushNamed(context, AppRoutes.nowPlaying);
-                  },
-                );
-              },
-            );
-          }
-          if (state is SearchInitial) {
-            if (state.history.isNotEmpty) {
-              return ListView.builder(
-                key: const ValueKey('search-history'),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: state.history.length,
-                itemBuilder: (context, index) {
-                  final historyItem = state.history[index];
-                  return ListTile(
-                    leading: const Icon(Icons.history_rounded, color: GlassColors.textSecondary),
-                    title: Text(
-                      historyItem,
-                      style: GoogleFonts.splineSans(
-                        color: GlassColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    trailing: const Icon(Icons.north_west_rounded, size: 16, color: GlassColors.textSecondary),
-                    onTap: () {
-                      _controller.text = historyItem;
-                      _controller.selection = TextSelection.fromPosition(
-                        TextPosition(offset: historyItem.length),
-                      );
-                      context.read<SearchBloc>().add(SearchQueryChanged(historyItem));
-                    },
-                  );
+            const SizedBox(height: 6),
+            Expanded(
+              child: BlocBuilder<SearchBloc, SearchState>(
+                builder: (context, state) {
+                  if (state is SearchLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+                    );
+                  }
+
+                  if (state is SearchError) {
+                    return _Message(text: state.message);
+                  }
+
+                  if (state is SearchLoaded) {
+                    if (state.results.isEmpty) {
+                      return const _Message(text: 'No results found');
+                    }
+
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
+                      children: [
+                        Text(
+                          'Top Result',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFFB9CCB2),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _TopResultCard(track: state.results.first),
+                        const SizedBox(height: 16),
+                        ...List.generate(state.results.length, (index) {
+                          final track = state.results[index];
+                          return _SearchRow(
+                            title: track.title,
+                            subtitle: track.artist,
+                            artUrl: track.albumArtUrl,
+                            onTap: () {
+                              context.read<PlayerBloc>().add(
+                                    PlayerPlayTrack(
+                                      track: track,
+                                      queue: state.results,
+                                      queueIndex: index,
+                                    ),
+                                  );
+                              Navigator.pushNamed(context, AppRoutes.nowPlaying);
+                            },
+                          );
+                        }),
+                      ],
+                    );
+                  }
+
+                  if (state is SearchInitial && state.history.isNotEmpty) {
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(18, 8, 18, 140),
+                      itemCount: state.history.length,
+                      itemBuilder: (context, index) {
+                        final item = state.history[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.history_rounded, color: Color(0xFFB9CCB2)),
+                          title: Text(
+                            item,
+                            style: GoogleFonts.inter(
+                              color: GlassColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onTap: () {
+                            _controller.text = item;
+                            _controller.selection = TextSelection.fromPosition(
+                              TextPosition(offset: item.length),
+                            );
+                            _onChanged(item);
+                          },
+                        );
+                      },
+                    );
+                  }
+
+                  return const _Message(text: 'Type something to start searching');
                 },
-              );
-            }
-          }
-          return const _MessageView(text: 'Type to search music');
-        },
-      )),
+              ),
+            ),
           ],
         ),
       ),
@@ -188,24 +205,161 @@ class _SearchContentState extends State<_SearchContent> {
   }
 }
 
-class _MessageView extends StatelessWidget {
+class _TopResultCard extends StatelessWidget {
+  final dynamic track;
+
+  const _TopResultCard({required this.track});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B1B1B),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 82,
+              height: 82,
+              child: track.albumArtUrl == null
+                  ? Container(
+                      color: const Color(0xFF2A2A2A),
+                      child: const Icon(Icons.music_note_rounded, color: GlassColors.textSecondary),
+                    )
+                  : Image.network(track.albumArtUrl!, fit: BoxFit.cover),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  track.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFEBFFE2),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    fontStyle: FontStyle.italic,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  '${track.artist} • Top Song',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFB9CCB2),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String? artUrl;
+  final VoidCallback onTap;
+
+  const _SearchRow({
+    required this.title,
+    required this.subtitle,
+    required this.artUrl,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: artUrl == null
+                    ? Container(
+                        color: const Color(0xFF2A2A2A),
+                        child: const Icon(Icons.music_note_rounded, color: GlassColors.textSecondary),
+                      )
+                    : Image.network(artUrl!, fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: GlassColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFB9CCB2),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '3:42',
+              style: GoogleFonts.inter(
+                color: const Color(0xFFB9CCB2),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.more_vert_rounded, color: GlassColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
   final String text;
 
-  const _MessageView({required this.text});
+  const _Message({required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: AnimatedOpacity(
-        opacity: 1,
-        duration: const Duration(milliseconds: 220),
-        child: Text(
-          text,
-          style: GoogleFonts.splineSans(
-            color: GlassColors.textSecondary,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(
+          color: const Color(0xFFB9CCB2),
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
@@ -11,6 +13,7 @@ class LocalLibraryService {
   static const _likedBoxName = 'liked_songs';
   static const _playlistsBoxName = 'local_playlists';
   static const _playlistTracksPrefix = 'playlist_tracks_';
+  static const _recentBoxName = 'recent_tracks';
 
   // static const _offlineBoxName = 'offline_songs'; // Already defined
 
@@ -19,13 +22,15 @@ class LocalLibraryService {
   late Box _likedBox;
   late Box _playlistsBox;
   late Box _offlineBox;
+  late Box _recentBox;
 
   Future<void> init() async {
     _likedBox = await Hive.openBox(_likedBoxName);
     _playlistsBox = await Hive.openBox(_playlistsBoxName);
     _offlineBox = await Hive.openBox(_offlineBoxName);
+    _recentBox = await Hive.openBox(_recentBoxName);
     _log.i('LocalLibraryService initialised '
-        '(${_likedBox.length} liked, ${_playlistsBox.length} playlists, ${_offlineBox.length} offline)');
+      '(${_likedBox.length} liked, ${_playlistsBox.length} playlists, ${_offlineBox.length} offline, ${_recentBox.length} recent)');
   }
   
   // ── Offline Songs ──────────────────────────────────────────────
@@ -40,6 +45,306 @@ class LocalLibraryService {
 
   int get offlineCount => _offlineBox.length;
 
+  // ── Recently Played ───────────────────────────────────────────
+
+  List<TrackModel> getRecentTracks({int limit = 12}) {
+    final entries = _recentBox.values
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+
+    entries.sort((a, b) {
+      final aPlayed = a['playedAt'] as int? ?? 0;
+      final bPlayed = b['playedAt'] as int? ?? 0;
+      return bPlayed.compareTo(aPlayed);
+    });
+
+    return entries
+        .take(limit)
+        .map((e) => _trackFromJson(e['track']))
+        .toList(growable: false);
+  }
+
+  Future<List<TrackModel>> getPersonalizedRecommendations({int limit = 10}) async {
+    final recentEntries = _recentBox.values
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+
+    recentEntries.sort((a, b) {
+      final aPlayed = a['playedAt'] as int? ?? 0;
+      final bPlayed = b['playedAt'] as int? ?? 0;
+      return bPlayed.compareTo(aPlayed);
+    });
+
+    final history = recentEntries
+        .map((e) => _trackFromJson(e['track']))
+        .toList(growable: false);
+
+    if (history.isEmpty) {
+      return _fallbackRecommendations(limit: limit);
+    }
+
+    final candidates = await _collectCandidateTracks();
+    if (candidates.isEmpty) {
+      return const <TrackModel>[];
+    }
+
+    final profile = _buildPreferenceProfile(history);
+    final excluded = history.take(3).map((t) => _trackFingerprint(t)).toSet();
+    final likedIds = _likedBox.keys.map((e) => e.toString()).toSet();
+    final recencyIndex = <String, int>{};
+    for (var i = 0; i < history.length; i++) {
+      recencyIndex[_trackFingerprint(history[i])] = i;
+    }
+
+    final scored = <({TrackModel track, double score, _TrackFeatures features})>[];
+    for (final track in candidates) {
+      final fp = _trackFingerprint(track);
+      if (excluded.contains(fp)) continue;
+
+      final features = _extractFeatures(track);
+      final score = _scoreTrack(
+        track: track,
+        features: features,
+        profile: profile,
+        likedIds: likedIds,
+        recencyIndex: recencyIndex,
+      );
+      if (score > 0) {
+        scored.add((track: track, score: score, features: features));
+      }
+    }
+
+    if (scored.isEmpty) {
+      return _fallbackRecommendations(limit: limit);
+    }
+
+    scored.sort((a, b) => b.score.compareTo(a.score));
+    return _diversifiedPick(scored, limit);
+  }
+
+  Future<void> addRecentTrack(TrackModel track) async {
+    await _recentBox.put(track.id, {
+      'track': _trackToJson(track),
+      'playedAt': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<List<TrackModel>> _collectCandidateTracks() async {
+    final dedup = <String, TrackModel>{};
+
+    for (final raw in _likedBox.values) {
+      final t = _trackFromJson(raw);
+      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+    }
+
+    for (final raw in _offlineBox.values) {
+      final t = _trackFromJson(raw);
+      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+    }
+
+    for (final playlistId in _playlistsBox.keys.map((e) => e.toString())) {
+      final box = await Hive.openBox('$_playlistTracksPrefix$playlistId');
+      for (final raw in box.values) {
+        final t = _trackFromJson(raw);
+        dedup.putIfAbsent(_trackFingerprint(t), () => t);
+      }
+    }
+
+    // Include history tracks as a fallback candidate set.
+    for (final raw in _recentBox.values) {
+      final m = Map<String, dynamic>.from(raw as Map);
+      final t = _trackFromJson(m['track']);
+      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+    }
+
+    return dedup.values.toList(growable: false);
+  }
+
+  List<TrackModel> _fallbackRecommendations({required int limit}) {
+    final fallback = <TrackModel>[];
+    fallback.addAll(getLikedSongs());
+    fallback.addAll(getOfflineSongs());
+    fallback.addAll(getRecentTracks(limit: limit * 2));
+
+    final dedup = <String, TrackModel>{};
+    for (final t in fallback) {
+      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+    }
+
+    return dedup.values.take(limit).toList(growable: false);
+  }
+
+  _PreferenceProfile _buildPreferenceProfile(List<TrackModel> history) {
+    final profile = _PreferenceProfile();
+    final top = history.take(30).toList(growable: false);
+
+    for (var i = 0; i < top.length; i++) {
+      final track = top[i];
+      final weight = 1.0 / (1.0 + i / 3.0);
+      final features = _extractFeatures(track);
+
+      profile.artistAffinity.update(
+        track.artist.toLowerCase().trim(),
+        (v) => v + weight,
+        ifAbsent: () => weight,
+      );
+
+      profile.languageAffinity.update(
+        features.language,
+        (v) => v + weight,
+        ifAbsent: () => weight,
+      );
+
+      for (final t in features.typeTags) {
+        profile.typeAffinity.update(t, (v) => v + weight, ifAbsent: () => weight);
+      }
+
+      for (final k in features.keywords) {
+        profile.keywordAffinity.update(k, (v) => v + weight, ifAbsent: () => weight);
+      }
+    }
+
+    return profile;
+  }
+
+  _TrackFeatures _extractFeatures(TrackModel track) {
+    final text = '${track.title} ${track.artist} ${track.albumName}'.toLowerCase();
+    final language = _guessLanguageBucket(track);
+
+    final typeTags = <String>{};
+    if (RegExp(r'\b(remix|mix|edit|version)\b').hasMatch(text)) {
+      typeTags.add('mix');
+    }
+    if (RegExp(r'\b(live|concert|acoustic|unplugged)\b').hasMatch(text)) {
+      typeTags.add('live');
+    }
+    if (RegExp(r'\b(inst|instrumental|karaoke|bgm)\b').hasMatch(text)) {
+      typeTags.add('instrumental');
+    }
+    if (RegExp(r'\b(lofi|lo-fi|chill|ambient|sleep)\b').hasMatch(text)) {
+      typeTags.add('chill');
+    }
+    if (RegExp(r'\b(rap|hip hop|hip-hop|trap)\b').hasMatch(text)) {
+      typeTags.add('rap');
+    }
+    if (RegExp(r'\b(devotional|bhajan|qawwali|worship)\b').hasMatch(text)) {
+      typeTags.add('devotional');
+    }
+
+    final keywords = <String>{};
+    for (final match in RegExp(r'[a-z0-9]+').allMatches(text)) {
+      final token = match.group(0)!;
+      if (token.length < 3) continue;
+      if (_stopWords.contains(token)) continue;
+      keywords.add(token);
+      if (keywords.length >= 18) break;
+    }
+
+    return _TrackFeatures(
+      language: language,
+      typeTags: typeTags,
+      keywords: keywords,
+    );
+  }
+
+  String _guessLanguageBucket(TrackModel track) {
+    final text = '${track.title} ${track.artist} ${track.albumName}';
+    if (RegExp(r'[\u0900-\u097F]').hasMatch(text)) return 'indic-devanagari';
+    if (RegExp(r'[\u0980-\u09FF]').hasMatch(text)) return 'indic-bengali';
+    if (RegExp(r'[\u0A80-\u0AFF]').hasMatch(text)) return 'indic-gujarati';
+    if (RegExp(r'[\u0B80-\u0BFF]').hasMatch(text)) return 'indic-tamil';
+    if (RegExp(r'[\u0C00-\u0C7F]').hasMatch(text)) return 'indic-telugu-kannada';
+    if (RegExp(r'[\u3040-\u30FF\u31F0-\u31FF]').hasMatch(text)) return 'japanese';
+    if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(text)) return 'korean';
+    if (RegExp(r'[\u4E00-\u9FFF]').hasMatch(text)) return 'cjk';
+    if (RegExp(r'[\u0600-\u06FF]').hasMatch(text)) return 'arabic';
+    if (RegExp(r'[\u0400-\u04FF]').hasMatch(text)) return 'cyrillic';
+    return 'latin';
+  }
+
+  double _scoreTrack({
+    required TrackModel track,
+    required _TrackFeatures features,
+    required _PreferenceProfile profile,
+    required Set<String> likedIds,
+    required Map<String, int> recencyIndex,
+  }) {
+    var score = 0.0;
+
+    final artistKey = track.artist.toLowerCase().trim();
+    score += (profile.artistAffinity[artistKey] ?? 0) * 2.4;
+    score += (profile.languageAffinity[features.language] ?? 0) * 1.8;
+
+    for (final tag in features.typeTags) {
+      score += (profile.typeAffinity[tag] ?? 0) * 1.2;
+    }
+
+    for (final token in features.keywords) {
+      score += (profile.keywordAffinity[token] ?? 0) * 0.18;
+    }
+
+    if (likedIds.contains(track.id)) {
+      score += 0.8;
+    }
+
+    final seenIndex = recencyIndex[_trackFingerprint(track)];
+    if (seenIndex != null) {
+      // Mild boost for known-good songs, with decay for older history.
+      score += 0.9 * math.exp(-seenIndex / 8.0);
+    }
+
+    return score;
+  }
+
+  List<TrackModel> _diversifiedPick(
+    List<({TrackModel track, double score, _TrackFeatures features})> ranked,
+    int limit,
+  ) {
+    final selected = <TrackModel>[];
+    final artistUsage = <String, int>{};
+    final languageUsage = <String, int>{};
+
+    final remaining = List.of(ranked);
+    while (selected.length < limit && remaining.isNotEmpty) {
+      var bestIdx = 0;
+      var bestValue = -1e9;
+
+      for (var i = 0; i < remaining.length; i++) {
+        final entry = remaining[i];
+        final artist = entry.track.artist.toLowerCase().trim();
+        final lang = entry.features.language;
+
+        final diversityPenalty =
+            (artistUsage[artist] ?? 0) * 0.9 + (languageUsage[lang] ?? 0) * 0.35;
+        final value = entry.score - diversityPenalty;
+
+        if (value > bestValue) {
+          bestValue = value;
+          bestIdx = i;
+        }
+      }
+
+      final picked = remaining.removeAt(bestIdx);
+      selected.add(picked.track);
+      final artist = picked.track.artist.toLowerCase().trim();
+      final lang = picked.features.language;
+      artistUsage[artist] = (artistUsage[artist] ?? 0) + 1;
+      languageUsage[lang] = (languageUsage[lang] ?? 0) + 1;
+    }
+
+    return selected;
+  }
+
+  String _trackFingerprint(TrackModel t) {
+    return '${t.id}::${t.title.toLowerCase().trim()}::${t.artist.toLowerCase().trim()}';
+  }
+
+  static const Set<String> _stopWords = {
+    'the', 'and', 'with', 'for', 'from', 'feat', 'feat.', 'ft', 'ft.', 'version',
+    'song', 'track', 'official', 'audio', 'video', 'music', 'remastered', 'single',
+    'original', 'edit', 'mix', 'live', 'album', 'ep', 'ost', 'vol', 'part',
+  };
+
   
   Future<void> addOfflineSong(TrackModel track) async {
     await _offlineBox.put(track.id, _trackToJson(track));
@@ -48,6 +353,12 @@ class LocalLibraryService {
   
   bool isOffline(String trackId) {
     return _offlineBox.containsKey(trackId);
+  }
+
+  TrackModel? getOfflineSongById(String trackId) {
+    final raw = _offlineBox.get(trackId);
+    if (raw == null) return null;
+    return _trackFromJson(raw);
   }
 
   // ── Liked Songs ──────────────────────────────────────────────
@@ -97,8 +408,11 @@ class LocalLibraryService {
     final box = await Hive.openBox('$_playlistTracksPrefix${playlist.id}');
     await box.clear();
     final entries = <String, Map<String, dynamic>>{};
-    for (final t in tracks) {
-      entries[t.id] = _trackToJson(t);
+    for (var i = 0; i < tracks.length; i++) {
+      final t = tracks[i];
+      // Index-based key keeps exact Spotify order and allows duplicate track IDs.
+      final key = '${i.toString().padLeft(6, '0')}::${t.id}';
+      entries[key] = _trackToJson(t);
     }
     await box.putAll(entries);
     _log.i('Saved playlist "${playlist.name}" (${tracks.length} tracks)');
@@ -106,7 +420,8 @@ class LocalLibraryService {
 
   Future<List<TrackModel>> getPlaylistTracks(String playlistId) async {
     final box = await Hive.openBox('$_playlistTracksPrefix$playlistId');
-    return box.values.map((e) => _trackFromJson(e)).toList();
+    final keys = box.keys.map((e) => e.toString()).toList()..sort();
+    return keys.map((k) => _trackFromJson(box.get(k))).toList();
   }
 
   Future<void> removePlaylist(String playlistId) async {
@@ -180,4 +495,23 @@ class LocalLibraryService {
       folderName: m['folderName'] as String?,
     );
   }
+}
+
+class _TrackFeatures {
+  final String language;
+  final Set<String> typeTags;
+  final Set<String> keywords;
+
+  const _TrackFeatures({
+    required this.language,
+    required this.typeTags,
+    required this.keywords,
+  });
+}
+
+class _PreferenceProfile {
+  final Map<String, double> artistAffinity = <String, double>{};
+  final Map<String, double> languageAffinity = <String, double>{};
+  final Map<String, double> typeAffinity = <String, double>{};
+  final Map<String, double> keywordAffinity = <String, double>{};
 }

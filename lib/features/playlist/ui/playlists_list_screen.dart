@@ -87,8 +87,8 @@ class _PlaylistsContent extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: GlassColors.accent,
-        foregroundColor: const Color(0xFF041118),
+        backgroundColor: const Color(0xFF00FF41),
+        foregroundColor: const Color(0xFF04210A),
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Create playlist flow coming soon')),
@@ -111,22 +111,40 @@ class _PlaylistsShell extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+            padding: const EdgeInsets.fromLTRB(8, 8, 16, 10),
             child: Row(
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: GlassColors.textPrimary,
+                    color: Color(0xFF00FF41),
                   ),
                 ),
-                Text(
-                  'Playlists',
-                  style: GoogleFonts.splineSans(
-                    color: GlassColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 26,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Playlists.',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFEBFFE2),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 30,
+                          letterSpacing: -0.8,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      Text(
+                        'All your imported collections',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFB9CCB2),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -146,8 +164,10 @@ class _PlaylistsEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: GlassPanel(
-        blur: 8,
+        blur: 0,
         borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF161616),
+        borderColor: const Color(0x22FFFFFF),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -156,17 +176,17 @@ class _PlaylistsEmpty extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'No playlists yet',
-              style: GoogleFonts.splineSans(
-                color: GlassColors.textPrimary,
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFEBFFE2),
+                fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Import one from Spotify to get started.',
-              style: GoogleFonts.splineSans(
-                color: GlassColors.textSecondary,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFB9CCB2),
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
@@ -186,8 +206,8 @@ class _PlaylistsError extends StatelessWidget {
     return Center(
       child: Text(
         'Error loading playlists',
-        style: GoogleFonts.splineSans(
-          color: GlassColors.textSecondary,
+        style: GoogleFonts.inter(
+          color: const Color(0xFFB9CCB2),
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -214,8 +234,10 @@ class _PlaylistTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: GlassPanel(
-        blur: 8,
+        blur: 0,
         borderRadius: BorderRadius.circular(18),
+        color: const Color(0xFF171717),
+        borderColor: const Color(0x26FFFFFF),
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
@@ -224,7 +246,7 @@ class _PlaylistTile extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0x22FFFFFF)),
+                border: Border.all(color: const Color(0x2200FF41)),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -245,24 +267,25 @@ class _PlaylistTile extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: GoogleFonts.splineSans(
-                      color: GlassColors.textPrimary,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFEBFFE2),
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '$trackCount tracks',
-                    style: GoogleFonts.splineSans(
-                      color: GlassColors.textSecondary,
-                      fontSize: 13,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFB9CCB2),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: GlassColors.textSecondary),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF00FF41)),
           ],
         ),
       ),

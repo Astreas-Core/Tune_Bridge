@@ -11,148 +11,133 @@ class LibraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final library = getIt<LocalLibraryService>();
-    final sections = <_LibraryItem>[
-      _LibraryItem(
-        title: 'Liked Songs',
-        subtitle: '${library.likedCount} tracks',
-        icon: Icons.favorite_rounded,
-        accent: const Color(0xFF00D7FF),
-        onTap: () => Navigator.pushNamed(context, AppRoutes.likedSongs),
-      ),
-      _LibraryItem(
-        title: 'Playlists',
-        subtitle: '${library.playlistCount} collections',
-        icon: Icons.queue_music_rounded,
-        accent: const Color(0xFF00B7D4),
-        onTap: () => Navigator.pushNamed(context, AppRoutes.playlistsList),
-      ),
-      _LibraryItem(
-        title: 'Offline Songs',
-        subtitle: '${library.offlineCount} downloaded',
-        icon: Icons.offline_pin_rounded,
-        accent: const Color(0xFF00C6B8),
-        onTap: () => Navigator.pushNamed(context, AppRoutes.offlineSongs),
-      ),
-      _LibraryItem(
-        title: 'Import',
-        subtitle: 'Sync from Spotify / links',
-        icon: Icons.move_to_inbox_rounded,
-        accent: const Color(0xFF18E0FF),
-        onTap: () => Navigator.pushNamed(context, AppRoutes.import_),
-      ),
-    ];
 
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: const Color(0xFF131313),
       body: SafeArea(
-        child: CustomScrollView(
+        child: ListView(
           physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Your Library',
-                      style: GoogleFonts.splineSans(
-                        color: GlassColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 30,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Your music, downloads, and playlists in one place.',
-                      style: GoogleFonts.splineSans(
-                        color: GlassColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const _LibraryHeaderStats(),
-                  ],
-                ),
-              ),
-            ),
-            SliverList.builder(
-              itemCount: sections.length,
-              itemBuilder: (context, index) {
-                final item = sections[index];
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                  child: _LibraryTile(item: item),
-                );
-              },
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 140)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LibraryHeaderStats extends StatelessWidget {
-  const _LibraryHeaderStats();
-
-  @override
-  Widget build(BuildContext context) {
-    final library = getIt<LocalLibraryService>();
-
-    return GlassPanel(
-      blur: 10,
-      borderRadius: BorderRadius.circular(20),
-      color: const Color(0x44121A24),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          _StatBubble(label: 'Liked', value: library.likedCount),
-          const SizedBox(width: 10),
-          _StatBubble(label: 'Playlists', value: library.playlistCount),
-          const SizedBox(width: 10),
-          _StatBubble(label: 'Offline', value: library.offlineCount),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatBubble extends StatelessWidget {
-  final String label;
-  final int value;
-
-  const _StatBubble({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0x33182330),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0x22FFFFFF)),
-        ),
-        child: Column(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 160),
           children: [
             Text(
-              '$value',
-              style: GoogleFonts.splineSans(
+              'Library',
+              style: GoogleFonts.inter(
                 color: GlassColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                fontSize: 56,
+                letterSpacing: -2,
               ),
             ),
-            Text(
-              label,
-              style: GoogleFonts.splineSans(
-                color: GlassColors.textSecondary,
-                fontWeight: FontWeight.w500,
-                fontSize: 11,
+            const SizedBox(height: 14),
+            const SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _FilterChip(label: 'Liked Songs', active: true),
+                  _FilterChip(label: 'Playlists'),
+                  _FilterChip(label: 'Offline'),
+                  _FilterChip(label: 'Imported'),
+                ],
               ),
+            ),
+            const SizedBox(height: 22),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'COLLECTION',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFB9CCB2),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Liked Songs',
+                        style: GoogleFonts.inter(
+                          color: GlassColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 34,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      Text(
+                        '${library.likedCount} tracks',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFB9CCB2),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.likedSongs),
+                  icon: const Icon(Icons.shuffle_rounded, size: 20),
+                  label: const Text('SHUFFLE'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FF41),
+                    foregroundColor: const Color(0xFF003907),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    textStyle: GoogleFonts.inter(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      letterSpacing: 1.2,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _LibraryRow(
+              title: 'Liked Songs',
+              subtitle: '${library.likedCount} tracks',
+              icon: Icons.favorite_rounded,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.likedSongs),
+            ),
+            _LibraryRow(
+              title: 'Playlists',
+              subtitle: '${library.playlistCount} collections',
+              icon: Icons.queue_music_rounded,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.playlistsList),
+            ),
+            _LibraryRow(
+              title: 'Offline Songs',
+              subtitle: '${library.offlineCount} downloaded',
+              icon: Icons.offline_pin_rounded,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.offlineSongs),
+            ),
+            _LibraryRow(
+              title: 'Import Source',
+              subtitle: 'Spotify and local files',
+              icon: Icons.move_to_inbox_rounded,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.import_),
+            ),
+            const SizedBox(height: 26),
+            Text(
+              'Recently Imported',
+              style: GoogleFonts.inter(
+                color: GlassColors.textPrimary,
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: const [
+                Expanded(child: _AuraTile(title: 'Project Horizon', tag: 'Local Files')),
+                SizedBox(width: 12),
+                Expanded(child: _AuraTile(title: 'Studio Sessions', tag: 'MP3 Import')),
+              ],
             ),
           ],
         ),
@@ -161,31 +146,67 @@ class _StatBubble extends StatelessWidget {
   }
 }
 
-class _LibraryTile extends StatelessWidget {
-  final _LibraryItem item;
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool active;
 
-  const _LibraryTile({required this.item});
+  const _FilterChip({required this.label, this.active = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: active ? const Color(0xFF00FF41) : const Color(0xFF353535),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: active ? const Color(0xFF003907) : const Color(0xFFB9CCB2),
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+class _LibraryRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _LibraryRow({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: item.onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: GlassPanel(
-        blur: 10,
-        borderRadius: BorderRadius.circular(18),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF131313),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
-                color: item.accent.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: item.accent.withValues(alpha: 0.45)),
+                color: const Color(0xFF2A2A2A),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(item.icon, color: item.accent, size: 22),
+              child: Icon(icon, color: const Color(0xFF00E639), size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -193,26 +214,25 @@ class _LibraryTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
-                    style: GoogleFonts.splineSans(
+                    title,
+                    style: GoogleFonts.inter(
                       color: GlassColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 2),
                   Text(
-                    item.subtitle,
-                    style: GoogleFonts.splineSans(
-                      color: GlassColors.textSecondary,
-                      fontWeight: FontWeight.w500,
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFB9CCB2),
                       fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: GlassColors.textSecondary),
+            const Icon(Icons.more_vert_rounded, color: GlassColors.textSecondary),
           ],
         ),
       ),
@@ -220,18 +240,51 @@ class _LibraryTile extends StatelessWidget {
   }
 }
 
-class _LibraryItem {
+class _AuraTile extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accent;
-  final VoidCallback onTap;
+  final String tag;
 
-  const _LibraryItem({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.accent,
-    required this.onTap,
-  });
+  const _AuraTile({required this.title, required this.tag});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2A2A2A), Color(0xFF131313)],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              tag.toUpperCase(),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF00FF41),
+                fontWeight: FontWeight.w800,
+                fontSize: 9,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                color: GlassColors.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

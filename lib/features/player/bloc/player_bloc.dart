@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 import 'package:tune_bridge/core/models/track_model.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
+import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
 import 'package:tune_bridge/features/player/bloc/player_state.dart';
@@ -13,6 +14,7 @@ import 'package:tune_bridge/features/player/bloc/player_state.dart';
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioPlayerService _audioService;
   final YouTubeService _youtubeService;
+  final LocalLibraryService _libraryService;
 
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration?>? _durationSub;
@@ -23,7 +25,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   /// Shuffled index order when shuffle is on.
   List<int>? _shuffledIndices;
 
-  PlayerBloc(this._audioService, this._youtubeService)
+  PlayerBloc(this._audioService, this._youtubeService, this._libraryService)
       : super(const PlayerState()) {
     on<PlayerPlayTrack>(_onPlayTrack);
     on<PlayerPause>(_onPause);
@@ -115,20 +117,32 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     Emitter<PlayerState> emit,
   ) async {
     try {
+      var resolvedTrack = track;
+
+      // If the selected track doesn't carry localPath, try resolving an offline copy by ID.
+      if ((resolvedTrack.localPath == null || resolvedTrack.localPath!.isEmpty) &&
+          _libraryService.isOffline(resolvedTrack.id)) {
+        final offlineVersion = _libraryService.getOfflineSongById(resolvedTrack.id);
+        if (offlineVersion != null) {
+          resolvedTrack = offlineVersion;
+        }
+      }
+
       // 1. Try playing from offline storage
-      if (track.localPath != null && track.localPath!.isNotEmpty) {
-        final file = File(track.localPath!);
+      if (resolvedTrack.localPath != null && resolvedTrack.localPath!.isNotEmpty) {
+        final file = File(resolvedTrack.localPath!);
         if (file.existsSync()) {
           try {
             await _audioService.play(
-              Uri.file(track.localPath!).toString(),
-              title: track.title,
-              artist: track.artist,
-              album: track.albumName,
-              artUri: track.albumArtUrl,
-              durationMs: track.durationMs,
+              Uri.file(resolvedTrack.localPath!).toString(),
+              title: resolvedTrack.title,
+              artist: resolvedTrack.artist,
+              album: resolvedTrack.albumName,
+              artUri: resolvedTrack.albumArtUrl,
+              durationMs: resolvedTrack.durationMs,
             );
             await _audioService.initEqualizer();
+            await _libraryService.addRecentTrack(resolvedTrack);
             emit(state.copyWith(isLoading: false, isPlaying: true));
             return;
           } catch (e) {
@@ -137,23 +151,23 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         }
       }
 
-      String? videoId = track.youtubeVideoId;
+      String? videoId = resolvedTrack.youtubeVideoId;
       if (videoId == null) {
         videoId = await _youtubeService.searchVideo(
-          title: track.title,
-          artist: track.artist,
+          title: resolvedTrack.title,
+          artist: resolvedTrack.artist,
         );
         if (videoId == null) {
           emit(state.copyWith(
             isLoading: false,
-            error: 'Could not find "${track.title}" on YouTube',
+            error: 'Could not find "${resolvedTrack.title}" on YouTube',
           ));
           return;
         }
       }
 
       // Check if track changed during search
-      if (state.currentTrack?.id != track.id) return;
+      if (state.currentTrack?.id != resolvedTrack.id) return;
 
       // Try to get stream URL and play, retry once on failure
       for (var attempt = 0; attempt < 2; attempt++) {
@@ -171,19 +185,20 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           return;
         }
 
-        if (state.currentTrack?.id != track.id) return;
+        if (state.currentTrack?.id != resolvedTrack.id) return;
 
         try {
           await _audioService.play(
             streamUrl,
-            title: track.title,
-            artist: track.artist,
-            album: track.albumName,
-            artUri: track.albumArtUrl,
-            durationMs: track.durationMs,
+            title: resolvedTrack.title,
+            artist: resolvedTrack.artist,
+            album: resolvedTrack.albumName,
+            artUri: resolvedTrack.albumArtUrl,
+            durationMs: resolvedTrack.durationMs,
           );
           // Initialize equalizer once audio source is set
           await _audioService.initEqualizer();
+            await _libraryService.addRecentTrack(resolvedTrack);
           emit(state.copyWith(
               isPlaying: true, isLoading: false)); 
           return; // success!
@@ -221,7 +236,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   Future<void> _onNext(PlayerNext event, Emitter<PlayerState> emit) async {
-    if (state.queue.isEmpty) return;
+    if (state.queue.isEmpty) {
+      return;
+    }
 
     int nextIndex;
     if (state.shuffleEnabled && _shuffledIndices != null) {

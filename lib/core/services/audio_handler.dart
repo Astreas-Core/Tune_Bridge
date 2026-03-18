@@ -90,6 +90,7 @@ class TuneBridgeAudioHandler extends BaseAudioHandler
       play();
     } catch (e) {
       _log.e('Error playing media item: ${mediaItem.title}', error: e);
+      rethrow;
     }
   }
 
@@ -116,6 +117,7 @@ class TuneBridgeAudioHandler extends BaseAudioHandler
       play();
     } catch (e) {
       _log.e('Error playing from URI: $uri', error: e);
+      rethrow;
     }
   }
 

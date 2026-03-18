@@ -61,9 +61,10 @@ class _LikedSongsView extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
                       child: GlassPanel(
-                        blur: 8,
+                        blur: 0,
                         borderRadius: BorderRadius.circular(20),
-                        color: const Color(0x44121A24),
+                        color: const Color(0xFF161616),
+                        borderColor: const Color(0x22FFFFFF),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
@@ -71,13 +72,13 @@ class _LikedSongsView extends StatelessWidget {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: const Color(0x3300D7FF),
+                                color: const Color(0x1F00FF41),
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0x5500D7FF)),
+                                border: Border.all(color: const Color(0x5000FF41)),
                               ),
                               child: const Icon(
                                 Icons.favorite_rounded,
-                                color: GlassColors.accent,
+                                color: Color(0xFF00FF41),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -87,17 +88,19 @@ class _LikedSongsView extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Liked Songs',
-                                    style: GoogleFonts.splineSans(
-                                      color: GlassColors.textPrimary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 17,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFFEBFFE2),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 22,
+                                      letterSpacing: -0.5,
+                                      fontStyle: FontStyle.italic,
                                     ),
                                   ),
                                   Text(
                                     '${tracks.length} tracks',
-                                    style: GoogleFonts.splineSans(
-                                      color: GlassColors.textSecondary,
-                                      fontWeight: FontWeight.w500,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFFB9CCB2),
+                                      fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -117,9 +120,9 @@ class _LikedSongsView extends StatelessWidget {
                               },
                               child: Text(
                                 'Play',
-                                style: GoogleFonts.splineSans(
-                                  color: GlassColors.accent,
-                                  fontWeight: FontWeight.w700,
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF00FF41),
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                             ),
@@ -183,22 +186,26 @@ class _BaseShell extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+            padding: const EdgeInsets.fromLTRB(8, 8, 16, 10),
             child: Row(
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: GlassColors.textPrimary,
+                    color: Color(0xFF00FF41),
                   ),
                 ),
-                Text(
-                  'Liked Songs',
-                  style: GoogleFonts.splineSans(
-                    color: GlassColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 26,
+                Expanded(
+                  child: Text(
+                    'Liked Songs.',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFEBFFE2),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 30,
+                      letterSpacing: -0.8,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
               ],
@@ -226,8 +233,10 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: GlassPanel(
-        blur: 8,
+        blur: 0,
         borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF161616),
+        borderColor: const Color(0x22FFFFFF),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -236,9 +245,9 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: GoogleFonts.splineSans(
-                color: GlassColors.textPrimary,
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFEBFFE2),
+                fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
             ),
@@ -246,8 +255,8 @@ class _EmptyState extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: GoogleFonts.splineSans(
-                color: GlassColors.textSecondary,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFB9CCB2),
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),

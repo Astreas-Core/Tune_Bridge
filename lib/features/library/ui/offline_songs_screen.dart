@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
@@ -43,15 +44,15 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
     final currentTrack = context.read<PlayerBloc>().state.currentTrack;
 
     if (currentTrack?.id == track.id) {
-       Navigator.pushNamed(context, AppRoutes.nowPlaying);
-       return;
+      Navigator.pushNamed(context, AppRoutes.nowPlaying);
+      return;
     }
 
     context.read<PlayerBloc>().add(
       PlayerPlayTrack(
         track: track,
         queue: _songs,
-        queueIndex: index
+        queueIndex: index,
       ),
     );
   }
@@ -64,22 +65,26 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 10),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(
                       Icons.arrow_back_ios_new_rounded,
-                      color: GlassColors.textPrimary,
+                      color: Color(0xFF00FF41),
                     ),
                   ),
-                  const Text(
-                    'Offline Songs',
-                    style: TextStyle(
-                      color: GlassColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 26,
+                  Expanded(
+                    child: Text(
+                      'Offline Songs.',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFFEBFFE2),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 30,
+                        letterSpacing: -0.8,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
                 ],
@@ -93,32 +98,34 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
                   : _songs.isEmpty
                       ? Center(
                           child: GlassPanel(
-                            blur: 8,
+                            blur: 0,
                             borderRadius: BorderRadius.circular(20),
+                            color: const Color(0xFF161616),
+                            borderColor: const Color(0x22FFFFFF),
                             padding: const EdgeInsets.all(20),
-                            child: const Column(
+                            child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.cloud_off_rounded,
                                   size: 48,
                                   color: GlassColors.textSecondary,
                                 ),
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 Text(
                                   'No offline songs yet',
-                                  style: TextStyle(
-                                    color: GlassColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
+                                  style: GoogleFonts.inter(
+                                    color: Color(0xFFEBFFE2),
+                                    fontWeight: FontWeight.w800,
                                     fontSize: 16,
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   'Download tracks from now playing to see them here.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: GlassColors.textSecondary,
+                                  style: GoogleFonts.inter(
+                                    color: Color(0xFFB9CCB2),
                                     fontWeight: FontWeight.w500,
                                     fontSize: 12,
                                   ),
