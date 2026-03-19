@@ -13,15 +13,17 @@ class PlayerPlayTrack extends PlayerEvent {
   final TrackModel track;
   final List<TrackModel> queue;
   final int queueIndex;
+  final bool preserveQueueOrder;
 
   const PlayerPlayTrack({
     required this.track,
     this.queue = const [],
     this.queueIndex = 0,
+    this.preserveQueueOrder = false,
   });
 
   @override
-  List<Object?> get props => [track, queue, queueIndex];
+  List<Object?> get props => [track, queue, queueIndex, preserveQueueOrder];
 }
 
 class PlayerPause extends PlayerEvent {

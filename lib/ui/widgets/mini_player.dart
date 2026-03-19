@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -45,26 +47,10 @@ class MiniPlayer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Hero(
-                  tag: 'art-${track.id}',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: track.albumArtUrl != null
-                          ? CachedNetworkImage(
-                              imageUrl: track.albumArtUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => _artPlaceholder(),
-                              errorWidget: (_, __, ___) => _artPlaceholder(),
-                            )
-                          : _artPlaceholder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+                _artwork(track),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,11 +58,10 @@ class MiniPlayer extends StatelessWidget {
                       Marquee(
                         child: Text(
                           track.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.visible,
+                          softWrap: false,
                           style: GoogleFonts.inter(
                             color: const Color(0xFFEBFFE2),
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                             fontStyle: FontStyle.italic,
                             letterSpacing: -0.2,
@@ -97,39 +82,38 @@ class MiniPlayer extends StatelessWidget {
                     ],
                   ),
                 ),
-                _PillControlButton(
-                  icon: Icons.skip_previous_rounded,
-                  onTap: () => context.read<PlayerBloc>().add(const PlayerPrevious()),
-                ),
-                const SizedBox(width: 4),
-                state.isLoading
-                    ? const SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF00FF41),
-                        ),
-                      )
-                    : _PillControlButton(
-                        icon: state.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                        isPrimary: true,
-                        onTap: () {
-                          context.read<PlayerBloc>().add(
-                                state.isPlaying
-                                    ? const PlayerPause()
-                                    : const PlayerResume(),
-                              );
-                        },
-                      ),
-                const SizedBox(width: 4),
-                _PillControlButton(
-                  icon: Icons.skip_next_rounded,
-                  onTap: () => context.read<PlayerBloc>().add(const PlayerNext()),
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _PillControlButton(
+                      icon: Icons.skip_previous_rounded,
+                      onTap: () => context.read<PlayerBloc>().add(const PlayerPrevious()),
+                    ),
+                    const SizedBox(width: 6),
+                    state.isLoading
+                        ? const _CuteMiniLoading()
+                        : _PillControlButton(
+                            icon: state.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                            isPrimary: true,
+                            onTap: () {
+                              context.read<PlayerBloc>().add(
+                                    state.isPlaying
+                                        ? const PlayerPause()
+                                        : const PlayerResume(),
+                                  );
+                            },
+                          ),
+                    const SizedBox(width: 6),
+                    _PillControlButton(
+                      icon: Icons.skip_next_rounded,
+                      onTap: () => context.read<PlayerBloc>().add(const PlayerNext()),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             BlocBuilder<PlayerBloc, ps.PlayerState>(
               buildWhen: (previous, current) => previous.position != current.position,
               builder: (context, positionState) {
@@ -177,7 +161,7 @@ class MiniPlayer extends StatelessWidget {
             margin: margin ?? const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: embedded
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(2, 2, 2, 0),
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 2),
                     child: content,
                   )
                 : GlassPanel(
@@ -185,7 +169,7 @@ class MiniPlayer extends StatelessWidget {
                     blur: 0,
                     color: const Color(0xFF151515),
                     borderColor: const Color(0x2400FF41),
-                    padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
                     child: content,
                   ),
           ),
@@ -203,6 +187,99 @@ class MiniPlayer extends StatelessWidget {
           color: const Color(0xFFB9CCB2).withValues(alpha: 0.75),
           size: 20,
         ),
+      ),
+    );
+  }
+
+  Widget _artwork(dynamic track) {
+    final artwork = ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: SizedBox(
+      width: 42,
+      height: 42,
+        child: track.albumArtUrl != null
+            ? CachedNetworkImage(
+                imageUrl: track.albumArtUrl!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _artPlaceholder(),
+                errorWidget: (_, __, ___) => _artPlaceholder(),
+              )
+            : _artPlaceholder(),
+      ),
+    );
+
+    if (embedded) {
+      return artwork;
+    }
+
+    return Hero(
+      tag: 'art-${track.id}',
+      child: artwork,
+    );
+  }
+}
+
+class _CuteMiniLoading extends StatefulWidget {
+  const _CuteMiniLoading();
+
+  @override
+  State<_CuteMiniLoading> createState() => _CuteMiniLoadingState();
+}
+
+class _CuteMiniLoadingState extends State<_CuteMiniLoading>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 34,
+      height: 34,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final phase = _controller.value * 6.283185307179586;
+          double level(double offset) => (math.sin(phase + offset) + 1) / 2;
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _bar(level(0.0)),
+              const SizedBox(width: 2),
+              _bar(level(1.6)),
+              const SizedBox(width: 2),
+              _bar(level(3.2)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _bar(double t) {
+    final height = 8.0 + (t * 12.0);
+    return Container(
+      width: 4,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFF00FF41).withValues(alpha: 0.45 + (t * 0.55)),
+        borderRadius: BorderRadius.circular(3),
       ),
     );
   }
@@ -227,18 +304,18 @@ class _PillControlButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Ink(
-          width: 34,
-          height: 34,
+            width: isPrimary ? 36 : 32,
+            height: isPrimary ? 36 : 32,
           decoration: BoxDecoration(
             color: isPrimary ? const Color(0xFF00FF41) : const Color(0xFF242424),
-            borderRadius: BorderRadius.circular(17),
+              borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isPrimary ? const Color(0x6000FF41) : const Color(0x22FFFFFF),
             ),
           ),
           child: Icon(
             icon,
-            size: 20,
+              size: isPrimary ? 20 : 18,
             color: isPrimary ? const Color(0xFF003907) : const Color(0xFFEBFFE2),
           ),
         ),

@@ -23,27 +23,45 @@ class Marquee extends StatefulWidget {
 class _MarqueeState extends State<Marquee> {
   final ScrollController _scrollController = ScrollController();
   bool _scrolling = false;
+  Timer? _retryTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
   }
+
+  @override
+  void didUpdateWidget(covariant Marquee oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.child != widget.child) {
+      _scrolling = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
+    }
+  }
   
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _startScrolling() async {
     if (!mounted || _scrolling) return;
-    
-    // Allow layout to settle
-    if (!_scrollController.hasClients) return;
-    
+    if (!_scrollController.hasClients) {
+      _retryStart();
+      return;
+    }
+
+    final position = _scrollController.position;
+    if (!position.hasViewportDimension || position.viewportDimension <= 1) {
+      _retryStart();
+      return;
+    }
+
     // Only scroll if content is larger than viewport
-    if (_scrollController.position.maxScrollExtent > 0) {
+    if (position.maxScrollExtent > 0) {
       _scrolling = true;
       
       // Wait for initial pause
@@ -53,7 +71,7 @@ class _MarqueeState extends State<Marquee> {
         return;
       }
       
-      final maxScroll = _scrollController.position.maxScrollExtent;
+      final maxScroll = position.maxScrollExtent;
       // Calculate duration based on distance and velocity
       final durationMs = (maxScroll / widget.velocity * 1000).toInt();
       final duration = Duration(milliseconds: durationMs);
@@ -87,13 +105,35 @@ class _MarqueeState extends State<Marquee> {
     }
   }
 
+  void _retryStart() {
+    _retryTimer?.cancel();
+    _retryTimer = Timer(const Duration(milliseconds: 220), () {
+      if (!mounted) return;
+      _startScrolling();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(), // Disable user scrolling
-      child: widget.child,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // If width is not yet laid out, avoid attaching a scroll position.
+        if (!constraints.hasBoundedWidth || constraints.maxWidth <= 1) {
+          return widget.child;
+        }
+
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: ClipRect(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(), // Disable user scrolling
+              child: widget.child,
+            ),
+          ),
+        );
+      },
     );
   }
 }

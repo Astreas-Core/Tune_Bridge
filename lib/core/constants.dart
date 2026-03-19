@@ -11,12 +11,11 @@ class AppConstants {
   static const String spotifyTokenUrl = 'https://accounts.spotify.com/api/token';
   static const String spotifyBaseUrl = 'https://api.spotify.com/v1';
   static const List<String> spotifyScopes = [
-    'user-read-private',
-    'user-read-email',
-    'user-library-read',
-    'playlist-read-private',
-    'playlist-read-collaborative',
-  ];
+  'user-read-private',
+  'user-read-email',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+];
 
   // Pagination
   static const int defaultPageSize = 20;
@@ -26,4 +25,28 @@ class AppConstants {
   static const String tracksBox = 'tracks_box';
   static const String playlistsBox = 'playlists_box';
   static const String settingsBox = 'settings_box';
+}
+
+/// Shared spacing scale used across screens/widgets.
+class AppSpacing {
+  AppSpacing._();
+
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 24;
+  static const double section = 14;
+}
+
+/// Shared border radius tokens for consistent curves.
+class AppRadii {
+  AppRadii._();
+
+  static const double sm = 10;
+  static const double md = 14;
+  static const double lg = 18;
+  static const double xl = 24;
+  static const double xxl = 28;
 }

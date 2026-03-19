@@ -5,35 +5,27 @@ import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/neumorphic.dart';
 
 class ThemeCubit extends Cubit<ThemeMode> {
-  ThemeCubit() : super(ThemeMode.light) {
-    _loadTheme();
+  ThemeCubit() : super(ThemeMode.dark) {
+    _readAccentOnly();
+    _syncDesignSystem(true);
   }
 
-  void _loadTheme() {
+  static void _readAccentOnly() {
     final box = Hive.box(AppConstants.settingsBox);
-    final isDark = box.get('isDark', defaultValue: false);
-    final mode = isDark ? ThemeMode.dark : ThemeMode.light;
-    
-    // Update Neumorphic global state
-    Neumorphic.setIsDark(isDark);
-    
-    // Load Accent Color
     final int? accentValue = box.get('accentColor');
     if (accentValue != null) {
       Neumorphic.setAccent(Color(accentValue));
     }
+  }
 
-    emit(mode);
+  void _syncDesignSystem(bool isDark) {
+    Neumorphic.setIsDark(isDark);
   }
 
   void toggleTheme(bool isDark) {
-    final box = Hive.box(AppConstants.settingsBox);
-    box.put('isDark', isDark);
-    
-    // Update Neumorphic global state
-    Neumorphic.setIsDark(isDark);
-    
-    emit(isDark ? ThemeMode.dark : ThemeMode.light);
+    // Dark mode is fixed for TuneBridge; keep API for compatibility.
+    _syncDesignSystem(true);
+    emit(ThemeMode.dark);
   }
 
   void setAccentColor(Color color) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tune_bridge/features/library/ui/offline_songs_screen.dart';
-import 'package:tune_bridge/features/home/ui/home_screen.dart';
+import 'package:tune_bridge/features/home/ui/artist_profile_screen.dart';
+import 'package:tune_bridge/core/models/track_model.dart';
 import 'package:tune_bridge/ui/widgets/main_shell.dart';
 import 'package:tune_bridge/ui/widgets/splash_screen.dart';
 import 'package:tune_bridge/features/player/ui/now_playing_screen.dart';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String search = '/search';
   static const String settings = '/settings';
   static const String import_ = '/import';
+  static const String artistProfile = '/artist-profile';
 
   static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -57,8 +59,18 @@ class AppRoutes {
         return _fade(const SettingsScreen());
       case import_:
         return _fade(const ImportScreen());
+      case artistProfile:
+        final args = routeSettings.arguments;
+        if (args is Map<String, dynamic>) {
+          final artist = args['artist'] as String? ?? 'Artist';
+          final tracks = (args['tracks'] as List<dynamic>? ?? const <dynamic>[])
+              .whereType<TrackModel>()
+              .toList(growable: false);
+          return _fade(ArtistProfileScreen(artistName: artist, tracks: tracks));
+        }
+        return _fade(const ArtistProfileScreen(artistName: 'Artist', tracks: <TrackModel>[]));
       default:
-        return _fade(const HomeScreen());
+        return _fade(const MainShell());
     }
   }
 

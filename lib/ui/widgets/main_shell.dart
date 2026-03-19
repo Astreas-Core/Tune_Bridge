@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/theme_cubit.dart';
 import 'package:tune_bridge/features/home/ui/home_screen.dart';
 import 'package:tune_bridge/features/library/ui/library_screen.dart';
@@ -39,73 +40,87 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     context.watch<ThemeCubit>();
+    final mediaQuery = MediaQuery.of(context);
 
     const screens = [
       HomeScreen(),
-      SearchScreen(),
+      SearchScreen(showBackButton: false),
       LibraryScreen(),
     ];
 
-    return Scaffold(
-      backgroundColor: GlassColors.background,
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF040404), Color(0xFF0A0A0D), Color(0xFF040404)],
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentIndex != 0) {
+          _onItemTapped(0);
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: GlassColors.background,
+        body: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF040404), Color(0xFF0A0A0D), Color(0xFF040404)],
+                ),
+              ),
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: screens,
               ),
             ),
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: screens,
-            ),
-          ),
 
-          Positioned(
-            left: 10,
-            right: 10,
-            bottom: 6,
-            child: GlassPanel(
-              borderRadius: BorderRadius.circular(24),
-              blur: 0,
-              color: const Color(0xCC171717),
-              borderColor: const Color(0x2200FF41),
-              padding: EdgeInsets.fromLTRB(
-                8,
-                8,
-                8,
-                6 + MediaQuery.of(context).padding.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const MiniPlayer(
-                    embedded: true,
-                    margin: EdgeInsets.zero,
+            Positioned(
+              left: AppSpacing.sm,
+              right: AppSpacing.sm,
+              bottom: 6,
+              child: MediaQuery.removeViewInsets(
+                context: context,
+                removeBottom: true,
+                child: GlassPanel(
+                  borderRadius: BorderRadius.circular(AppRadii.xl),
+                  blur: 0,
+                  color: const Color(0xCC171717),
+                  borderColor: const Color(0x2200FF41),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    6 + mediaQuery.padding.bottom,
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    color: const Color(0x22FFFFFF),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildNavItem(Icons.home_rounded, 'Home', 0),
-                      _buildNavItem(Icons.search_rounded, 'Search', 1),
-                      _buildNavItem(Icons.library_music_rounded, 'Library', 2),
+                      const MiniPlayer(
+                        embedded: true,
+                        margin: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        height: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        color: const Color(0x22FFFFFF),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _buildNavItem(Icons.home_rounded, 'Home', 0),
+                          _buildNavItem(Icons.search_rounded, 'Search', 1),
+                          _buildNavItem(Icons.library_music_rounded, 'Library', 2),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -124,7 +139,7 @@ class _MainShellState extends State<MainShell> {
             color: isSelected
                 ? const Color(0xFF353535)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadii.sm),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

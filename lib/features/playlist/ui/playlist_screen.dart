@@ -175,6 +175,7 @@ class PlaylistScreen extends StatelessWidget {
                                         track: track,
                                         queue: state.tracks,
                                         queueIndex: index,
+                                        preserveQueueOrder: true,
                                       ),
                                     );
                                 Navigator.pushNamed(context, AppRoutes.nowPlaying);

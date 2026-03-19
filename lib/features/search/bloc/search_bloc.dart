@@ -17,6 +17,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     on<SearchQueryChanged>(_onQueryChanged);
     on<SearchQueryCommitted>(_onQueryCommitted);
+    on<SearchHistoryCleared>(_onHistoryCleared);
 
     _sanitizeAndPersistHistory();
 
@@ -55,6 +56,14 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     _addToHistory(query);
   }
 
+  Future<void> _onHistoryCleared(
+    SearchHistoryCleared event,
+    Emitter<SearchState> emit,
+  ) async {
+    await _box.put(_historyKey, const <String>[]);
+    emit(const SearchInitial([]));
+  }
+
   List<String> _getHistory() {
     final dynamic raw = _box.get(_historyKey, defaultValue: []);
     if (raw is List) {
@@ -70,41 +79,30 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     final List<String> history = List<String>.from(_getHistory());
     history.removeWhere((h) => _normalize(h) == normalized);
-    history.insert(0, query);
+    history.insert(0, query.trim());
 
-    final cleaned = _compressPrefixFlood(history);
-    final trimmed = cleaned.take(10).toList(growable: false);
+    final cleaned = _dedupeExactNormalized(history);
+    final trimmed = cleaned.take(12).toList(growable: false);
 
     _box.put(_historyKey, trimmed);
   }
 
   void _sanitizeAndPersistHistory() {
     final current = _getHistory();
-    final cleaned = _compressPrefixFlood(current).take(10).toList(growable: false);
+    final cleaned = _dedupeExactNormalized(current).take(12).toList(growable: false);
     _box.put(_historyKey, cleaned);
   }
 
-  List<String> _compressPrefixFlood(List<String> input) {
-    final filtered = input.where((e) => e.trim().length >= 2).toList(growable: false);
+  List<String> _dedupeExactNormalized(List<String> input) {
+    final seen = <String>{};
     final output = <String>[];
-
-    for (final candidate in filtered) {
-      final cNorm = _normalize(candidate);
-      if (cNorm.isEmpty) continue;
-
-      final hasLongerVariant = filtered.any((other) {
-        final oNorm = _normalize(other);
-        return oNorm.length > cNorm.length && oNorm.startsWith(cNorm);
-      });
-
-      if (hasLongerVariant) continue;
-
-      final exists = output.any((saved) => _normalize(saved) == cNorm);
-      if (!exists) {
-        output.add(candidate);
-      }
+    for (final candidate in input) {
+      final normalized = _normalize(candidate);
+      if (normalized.length < 2) continue;
+      if (seen.contains(normalized)) continue;
+      seen.add(normalized);
+      output.add(candidate.trim());
     }
-
     return output;
   }
 

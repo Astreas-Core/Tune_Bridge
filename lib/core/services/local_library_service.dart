@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
@@ -23,6 +25,8 @@ class LocalLibraryService {
   late Box _playlistsBox;
   late Box _offlineBox;
   late Box _recentBox;
+  List<TrackModel>? _knownTracksCache;
+  int _knownTracksCacheAtMs = 0;
 
   Future<void> init() async {
     _likedBox = await Hive.openBox(_likedBoxName);
@@ -38,12 +42,17 @@ class LocalLibraryService {
   List<TrackModel> getOfflineSongs() {
     return _offlineBox.values
         .map((e) => _trackFromJson(e))
+        .where((track) {
+          final path = track.localPath;
+          return path != null && path.isNotEmpty && File(path).existsSync();
+        })
         .toList()
         .reversed
         .toList();
   }
 
   int get offlineCount => _offlineBox.length;
+  ValueListenable<Box> get offlineSongsListenable => _offlineBox.listenable();
 
   // ── Recently Played ───────────────────────────────────────────
 
@@ -64,7 +73,7 @@ class LocalLibraryService {
         .toList(growable: false);
   }
 
-  Future<List<TrackModel>> getPersonalizedRecommendations({int limit = 10}) async {
+  Future<List<TrackModel>> getPersonalizedRecommendations({int limit = 10, int seed = 0}) async {
     final recentEntries = _recentBox.values
         .map((e) => Map<String, dynamic>.from(e as Map))
         .toList();
@@ -108,6 +117,8 @@ class LocalLibraryService {
         profile: profile,
         likedIds: likedIds,
         recencyIndex: recencyIndex,
+        history: history,
+        seed: seed,
       );
       if (score > 0) {
         scored.add((track: track, score: score, features: features));
@@ -119,17 +130,47 @@ class LocalLibraryService {
     }
 
     scored.sort((a, b) => b.score.compareTo(a.score));
-    return _diversifiedPick(scored, limit);
+    return _diversifiedPick(scored, limit, seed: seed);
   }
 
   Future<void> addRecentTrack(TrackModel track) async {
+    _invalidateKnownTracksCache();
     await _recentBox.put(track.id, {
       'track': _trackToJson(track),
       'playedAt': DateTime.now().millisecondsSinceEpoch,
     });
+
+    // Keep recent history bounded so the box does not grow unbounded.
+    if (_recentBox.length > 30) {
+      final entries = _recentBox.toMap().entries
+          .map((e) => (
+                key: e.key,
+                playedAt: (Map<String, dynamic>.from(e.value as Map))['playedAt'] as int? ?? 0,
+              ))
+          .toList(growable: false)
+        ..sort((a, b) => b.playedAt.compareTo(a.playedAt));
+
+      final keysToDelete = entries.skip(30).map((e) => e.key).toList(growable: false);
+      if (keysToDelete.isNotEmpty) {
+        await _recentBox.deleteAll(keysToDelete);
+      }
+    }
+  }
+
+  ValueListenable<Box> get recentTracksListenable => _recentBox.listenable();
+
+  /// Returns a deduplicated view of all locally known tracks.
+  /// Includes liked, offline, playlist tracks and recent history.
+  Future<List<TrackModel>> getAllKnownTracks() {
+    return _collectCandidateTracks();
   }
 
   Future<List<TrackModel>> _collectCandidateTracks() async {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (_knownTracksCache != null && (nowMs - _knownTracksCacheAtMs) < 45000) {
+      return _knownTracksCache!;
+    }
+
     final dedup = <String, TrackModel>{};
 
     for (final raw in _likedBox.values) {
@@ -157,7 +198,10 @@ class LocalLibraryService {
       dedup.putIfAbsent(_trackFingerprint(t), () => t);
     }
 
-    return dedup.values.toList(growable: false);
+    final result = dedup.values.toList(growable: false);
+    _knownTracksCache = result;
+    _knownTracksCacheAtMs = nowMs;
+    return result;
   }
 
   List<TrackModel> _fallbackRecommendations({required int limit}) {
@@ -268,6 +312,8 @@ class LocalLibraryService {
     required _PreferenceProfile profile,
     required Set<String> likedIds,
     required Map<String, int> recencyIndex,
+    required List<TrackModel> history,
+    required int seed,
   }) {
     var score = 0.0;
 
@@ -293,18 +339,53 @@ class LocalLibraryService {
       score += 0.9 * math.exp(-seenIndex / 8.0);
     }
 
+    final normalizedTitle = track.title.toLowerCase();
+    if (normalizedTitle.contains('instrumental') || normalizedTitle.contains('karaoke')) {
+      score -= 0.55;
+    }
+
+    // Reward candidates that share meaningful title tokens with highly recent tracks.
+    final recentHead = history.take(5);
+    var semanticBoost = 0.0;
+    for (final h in recentHead) {
+      final hTokens = _extractFeatures(h).keywords;
+      if (hTokens.isEmpty || features.keywords.isEmpty) continue;
+      final overlap = hTokens.intersection(features.keywords).length;
+      if (overlap > 0) {
+        semanticBoost += 0.22 * overlap;
+      }
+    }
+    score += semanticBoost;
+
+    // Tiny deterministic jitter allows frequent refresh changes without random junk.
+    final hashJitter = ((_trackFingerprint(track).hashCode ^ seed) & 0xFF) / 255.0;
+    score += hashJitter * 0.18;
+
     return score;
   }
 
   List<TrackModel> _diversifiedPick(
     List<({TrackModel track, double score, _TrackFeatures features})> ranked,
     int limit,
+    {int seed = 0}
   ) {
+    if (ranked.isEmpty) return const <TrackModel>[];
+
     final selected = <TrackModel>[];
     final artistUsage = <String, int>{};
     final languageUsage = <String, int>{};
 
-    final remaining = List.of(ranked);
+    final topWindow = ranked.take(math.min(18, ranked.length)).toList(growable: true);
+    final tail = ranked.skip(topWindow.length).toList(growable: false);
+
+    final bucket = DateTime.now().millisecondsSinceEpoch ~/
+        const Duration(minutes: 3).inMilliseconds;
+    topWindow.shuffle(math.Random(bucket + seed + ranked.length));
+
+    final remaining = <({TrackModel track, double score, _TrackFeatures features})>[
+      ...topWindow,
+      ...tail,
+    ];
     while (selected.length < limit && remaining.isNotEmpty) {
       var bestIdx = 0;
       var bestValue = -1e9;
@@ -339,6 +420,11 @@ class LocalLibraryService {
     return '${t.id}::${t.title.toLowerCase().trim()}::${t.artist.toLowerCase().trim()}';
   }
 
+  void _invalidateKnownTracksCache() {
+    _knownTracksCache = null;
+    _knownTracksCacheAtMs = 0;
+  }
+
   static const Set<String> _stopWords = {
     'the', 'and', 'with', 'for', 'from', 'feat', 'feat.', 'ft', 'ft.', 'version',
     'song', 'track', 'official', 'audio', 'video', 'music', 'remastered', 'single',
@@ -347,12 +433,20 @@ class LocalLibraryService {
 
   
   Future<void> addOfflineSong(TrackModel track) async {
+    _invalidateKnownTracksCache();
     await _offlineBox.put(track.id, _trackToJson(track));
     _log.i('Saved offline: ${track.title}');
   }
   
   bool isOffline(String trackId) {
     return _offlineBox.containsKey(trackId);
+  }
+
+  bool hasPlayableOfflineCopy(String trackId) {
+    final track = getOfflineSongById(trackId);
+    final path = track?.localPath;
+    if (path == null || path.isEmpty) return false;
+    return File(path).existsSync();
   }
 
   TrackModel? getOfflineSongById(String trackId) {
@@ -372,23 +466,27 @@ class LocalLibraryService {
   }
 
   Future<void> addLikedSong(TrackModel track) async {
+    _invalidateKnownTracksCache();
     await _likedBox.put(track.id, _trackToJson(track));
     _log.i('Liked: ${track.title}');
   }
 
   Future<void> addLikedSongs(List<TrackModel> tracks) async {
+    _invalidateKnownTracksCache();
     final entries = {for (final t in tracks) t.id: _trackToJson(t)};
     await _likedBox.putAll(entries);
     _log.i('Added ${tracks.length} liked songs');
   }
 
   Future<void> removeLikedSong(String trackId) async {
+    _invalidateKnownTracksCache();
     await _likedBox.delete(trackId);
   }
 
   bool isLiked(String trackId) => _likedBox.containsKey(trackId);
 
   int get likedCount => _likedBox.length;
+  ValueListenable<Box> get likedSongsListenable => _likedBox.listenable();
 
   // ── Playlists ────────────────────────────────────────────────
 
@@ -404,6 +502,7 @@ class LocalLibraryService {
     PlaylistModel playlist,
     List<TrackModel> tracks,
   ) async {
+    _invalidateKnownTracksCache();
     await _playlistsBox.put(playlist.id, _playlistToJson(playlist));
     final box = await Hive.openBox('$_playlistTracksPrefix${playlist.id}');
     await box.clear();
@@ -425,6 +524,7 @@ class LocalLibraryService {
   }
 
   Future<void> removePlaylist(String playlistId) async {
+    _invalidateKnownTracksCache();
     await _playlistsBox.delete(playlistId);
     if (Hive.isBoxOpen('$_playlistTracksPrefix$playlistId')) {
       final box = Hive.box('$_playlistTracksPrefix$playlistId');
@@ -437,6 +537,7 @@ class LocalLibraryService {
   }
 
   int get playlistCount => _playlistsBox.length;
+  ValueListenable<Box> get playlistsListenable => _playlistsBox.listenable();
 
   // ── JSON serialisation helpers ───────────────────────────────
 

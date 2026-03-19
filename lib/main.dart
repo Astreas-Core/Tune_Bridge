@@ -9,6 +9,7 @@ import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/routes.dart';
 import 'package:tune_bridge/core/services/audio_handler.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
+import 'package:tune_bridge/core/services/display_refresh_service.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/core/theme.dart';
@@ -48,6 +49,9 @@ Future<void> main() async {
   // Register dependencies
   setupServiceLocator(localLibrary, audioHandler);
 
+  // Apply display refresh mode preference before UI interaction.
+  await getIt<DisplayRefreshService>().applySavedPreference();
+
   runApp(const TuneBridgeApp());
 }
 
@@ -67,19 +71,14 @@ class TuneBridgeApp extends StatelessWidget {
           ),
         ),
       ],
-      child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, _) {
-          return MaterialApp(
-            title: AppConstants.appName,
-            debugShowCheckedModeBanner: false,
-            themeMode: ThemeMode.dark,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeAnimationDuration: Duration.zero,
-            initialRoute: AppRoutes.splash,
-            onGenerateRoute: AppRoutes.onGenerateRoute,
-          );
-        },
+      child: MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
+        theme: AppTheme.darkTheme,
+        darkTheme: AppTheme.darkTheme,
+        initialRoute: AppRoutes.splash,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );
   }

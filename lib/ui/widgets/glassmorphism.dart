@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tune_bridge/core/constants.dart';
 
 class GlassColors {
   GlassColors._();
@@ -24,7 +25,7 @@ class GlassPanel extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.borderRadius = const BorderRadius.all(Radius.circular(24)),
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadii.xl)),
     this.blur = 16,
     this.color = const Color(0x66111722),
     this.borderColor = const Color(0x33FFFFFF),
@@ -32,25 +33,37 @@ class GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    const defaultPanelColor = Color(0x66111722);
+    const defaultBorderColor = Color(0x33FFFFFF);
+    final resolvedColor = color == defaultPanelColor
+        ? (isLight ? const Color(0xCCFFFFFF) : defaultPanelColor)
+        : color;
+    final resolvedBorder = borderColor == defaultBorderColor
+        ? (isLight ? const Color(0x19000000) : defaultBorderColor)
+        : borderColor;
+
     return ClipRRect(
       borderRadius: borderRadius,
       child: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF101015), Color(0xFF0A0A0D)],
+            colors: isLight
+                ? const [Color(0xFFFDFEFD), Color(0xFFF2F7F4)]
+                : const [Color(0xFF101015), Color(0xFF0A0A0D)],
           ),
         ),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: color,
+            color: resolvedColor,
             borderRadius: borderRadius,
-            border: Border.all(color: borderColor),
-            boxShadow: const [
+            border: Border.all(color: resolvedBorder),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x66000000),
+                color: isLight ? const Color(0x12000000) : const Color(0x66000000),
                 blurRadius: 16,
                 offset: Offset(0, 8),
               ),
@@ -82,13 +95,13 @@ class GlassIconButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        width: 44,
-        height: 44,
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
           color: isActive
               ? GlassColors.accent.withValues(alpha: 0.18)
               : GlassColors.surfaceRaised,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(
             color: isActive
                 ? GlassColors.accent.withValues(alpha: 0.55)
@@ -98,7 +111,7 @@ class GlassIconButton extends StatelessWidget {
         child: Icon(
           icon,
           color: isActive ? GlassColors.accent : GlassColors.textPrimary,
-          size: 22,
+          size: 23,
         ),
       ),
     );

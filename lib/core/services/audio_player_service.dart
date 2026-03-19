@@ -20,6 +20,11 @@ class AudioPlayerService {
 
   Stream<void> get skipNextStream => _handler.skipNextStream;
   Stream<void> get skipPreviousStream => _handler.skipPreviousStream;
+  int get crossfadeSeconds => _handler.crossfadeDuration.inSeconds;
+
+  Future<void> setCrossfadeSeconds(int seconds) async {
+    await _handler.setCrossfadeDuration(Duration(seconds: seconds.clamp(1, 12)));
+  }
 
   /// Play a YouTube audio stream URL or local file path with metadata.
   Future<void> play(String url, {
@@ -56,6 +61,54 @@ class AudioPlayerService {
   Future<void> stop() async => _handler.stop();
   Future<void> seek(Duration position) async => _handler.seek(position);
   Future<void> setVolume(double volume) async => _handler.player.setVolume(volume);
+
+  Future<void> smoothStopForTransition() async {
+    if (!_handler.player.playing) {
+      await _handler.stop();
+      return;
+    }
+
+    final duration = _handler.crossfadeDuration;
+    final totalMs = duration.inMilliseconds;
+    if (totalMs <= 0) {
+      await _handler.stop();
+      return;
+    }
+
+    // Shorten fade-out so transition remains responsive.
+    final fadeMs = (totalMs ~/ 2).clamp(120, 1200);
+    const steps = 8;
+    final stepDelay = Duration(milliseconds: (fadeMs ~/ steps).clamp(15, 200));
+
+    for (var i = steps - 1; i >= 0; i--) {
+      final t = i / steps;
+      await _handler.player.setVolume(t);
+      await Future<void>.delayed(stepDelay);
+    }
+
+    await _handler.stop();
+  }
+
+  Future<void> smoothFadeInAfterStart() async {
+    final duration = _handler.crossfadeDuration;
+    final totalMs = duration.inMilliseconds;
+    if (totalMs <= 0) {
+      await _handler.player.setVolume(1.0);
+      return;
+    }
+
+    final fadeMs = (totalMs ~/ 2).clamp(120, 1200);
+    const steps = 8;
+    final stepDelay = Duration(milliseconds: (fadeMs ~/ steps).clamp(15, 200));
+
+    await _handler.player.setVolume(0.0);
+    for (var i = 1; i <= steps; i++) {
+      final t = i / steps;
+      await _handler.player.setVolume(t);
+      await Future<void>.delayed(stepDelay);
+    }
+    await _handler.player.setVolume(1.0);
+  }
 
   Future<void> dispose() async {
     await _handler.stop();

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class SongTile extends StatelessWidget {
@@ -26,7 +27,7 @@ class SongTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final artwork = ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadii.sm),
       child: SizedBox(
         width: 52,
         height: 52,
@@ -41,20 +42,20 @@ class SongTile extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 6),
       child: GlassPanel(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
         blur: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
         color: isPlaying ? const Color(0x33203B45) : const Color(0x33171B24),
         borderColor: isPlaying ? const Color(0x5500D7FF) : const Color(0x22FFFFFF),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadii.md),
           child: Row(
             children: [
               heroTag != null ? Hero(tag: heroTag!, child: artwork) : artwork,
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

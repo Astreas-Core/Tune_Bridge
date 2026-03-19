@@ -35,6 +35,7 @@ dependencies:
   cached_network_image: any
   shimmer: any
   google_fonts: any
+  palette_generator: ^0.3.3+7
 
   # Utilities
   get_it: any
@@ -42,6 +43,8 @@ dependencies:
   path_provider: ^2.1.5
   dio: ^5.9.2
   permission_handler: ^12.0.1
+  flutter_appauth: ^8.0.3
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/routes.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
@@ -14,19 +15,23 @@ import 'package:tune_bridge/features/search/bloc/search_state.dart';
 import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class SearchScreen extends StatelessWidget {
-  const SearchScreen({super.key});
+  final bool showBackButton;
+
+  const SearchScreen({super.key, this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => SearchBloc(getIt<YouTubeService>()),
-      child: const _SearchView(),
+      child: _SearchView(showBackButton: showBackButton),
     );
   }
 }
 
 class _SearchView extends StatefulWidget {
-  const _SearchView();
+  final bool showBackButton;
+
+  const _SearchView({required this.showBackButton});
 
   @override
   State<_SearchView> createState() => _SearchViewState();
@@ -61,19 +66,20 @@ class _SearchViewState extends State<_SearchView> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 10),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
-                  ),
+                  if (widget.showBackButton)
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
+                    ),
                   Expanded(
                     child: Container(
-                      height: 56,
+                      height: 54,
                       decoration: BoxDecoration(
                         color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       child: TextField(
                         controller: _controller,
@@ -82,13 +88,15 @@ class _SearchViewState extends State<_SearchView> {
                           context.read<SearchBloc>().add(SearchQueryCommitted(value));
                         },
                         textInputAction: TextInputAction.search,
+                        textAlign: TextAlign.center,
+                        textAlignVertical: TextAlignVertical.center,
                         style: GoogleFonts.inter(
                           color: GlassColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF00E639)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                           hintText: 'Artists, songs, or playlists',
                           hintStyle: GoogleFonts.inter(
                             color: const Color(0xFFB9CCB2),
@@ -130,7 +138,7 @@ class _SearchViewState extends State<_SearchView> {
                     }
 
                     return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 140),
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 140),
                       children: [
                         Text(
                           'Top Result',
@@ -141,8 +149,21 @@ class _SearchViewState extends State<_SearchView> {
                             letterSpacing: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        _TopResultCard(track: state.results.first),
+                        const SizedBox(height: AppSpacing.sm + 2),
+                        _TopResultCard(
+                          track: state.results.first,
+                          onPlay: () {
+                            final track = state.results.first;
+                            context.read<PlayerBloc>().add(
+                                  PlayerPlayTrack(
+                                    track: track,
+                                    queue: state.results,
+                                    queueIndex: 0,
+                                  ),
+                                );
+                            Navigator.pushNamed(context, AppRoutes.nowPlaying);
+                          },
+                        ),
                         const SizedBox(height: 16),
                         ...List.generate(state.results.length, (index) {
                           final track = state.results[index];
@@ -167,30 +188,60 @@ class _SearchViewState extends State<_SearchView> {
                   }
 
                   if (state is SearchInitial && state.history.isNotEmpty) {
-                    return ListView.builder(
+                    return ListView(
                       padding: const EdgeInsets.fromLTRB(18, 8, 18, 140),
-                      itemCount: state.history.length,
-                      itemBuilder: (context, index) {
-                        final item = state.history[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.history_rounded, color: Color(0xFFB9CCB2)),
-                          title: Text(
-                            item,
-                            style: GoogleFonts.inter(
-                              color: GlassColors.textPrimary,
-                              fontWeight: FontWeight.w600,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'SEARCH HISTORY',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFFB9CCB2),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                  letterSpacing: 1.4,
+                                ),
+                              ),
                             ),
-                          ),
-                          onTap: () {
-                            _controller.text = item;
-                            _controller.selection = TextSelection.fromPosition(
-                              TextPosition(offset: item.length),
-                            );
-                            _onChanged(item);
-                          },
-                        );
-                      },
+                            TextButton(
+                              onPressed: () {
+                                context.read<SearchBloc>().add(const SearchHistoryCleared());
+                              },
+                              child: Text(
+                                'CLEAR',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF00FF41),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        ...List.generate(state.history.length, (index) {
+                          final item = state.history[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.history_rounded, color: Color(0xFFB9CCB2)),
+                            title: Text(
+                              item,
+                              style: GoogleFonts.inter(
+                                color: GlassColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onTap: () {
+                              _controller.text = item;
+                              _controller.selection = TextSelection.fromPosition(
+                                TextPosition(offset: item.length),
+                              );
+                              _onChanged(item);
+                            },
+                          );
+                        }),
+                      ],
                     );
                   }
 
@@ -207,21 +258,22 @@ class _SearchViewState extends State<_SearchView> {
 
 class _TopResultCard extends StatelessWidget {
   final dynamic track;
+  final VoidCallback onPlay;
 
-  const _TopResultCard({required this.track});
+  const _TopResultCard({required this.track, required this.onPlay});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: const Color(0xFF1B1B1B),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadii.sm),
             child: SizedBox(
               width: 82,
               height: 82,
@@ -263,6 +315,23 @@ class _TopResultCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: onPlay,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF00FF41),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Color(0xFF003907),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -287,7 +356,7 @@ class _SearchRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: Row(
           children: [
             ClipRRect(

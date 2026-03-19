@@ -1,25 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
-import 'package:tune_bridge/core/services/local_library_service.dart';
-import 'package:tune_bridge/core/theme_cubit.dart';
+import 'package:tune_bridge/core/services/audio_player_service.dart';
+import 'package:tune_bridge/core/services/display_refresh_service.dart';
 import 'package:tune_bridge/features/settings/ui/equalizer_screen.dart';
 import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeCubit>().state == ThemeMode.dark;
-    final library = getIt<LocalLibraryService>();
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
 
+class _SettingsScreenState extends State<SettingsScreen> {
+  late final AudioPlayerService _audioService;
+  late final DisplayRefreshService _displayRefreshService;
+  late int _crossfadeSeconds;
+  late bool _forceMaxRefreshRate;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioService = getIt<AudioPlayerService>();
+    _displayRefreshService = getIt<DisplayRefreshService>();
+    _crossfadeSeconds = _audioService.crossfadeSeconds.clamp(1, 12);
+    _forceMaxRefreshRate = _displayRefreshService.isForceMaxRefreshRateEnabled;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 140),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 140),
           children: [
             Row(
               children: [
@@ -38,38 +54,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            _HeaderSection(
-              title: 'ACCOUNT',
-              child: _ListTileRow(
-                icon: Icons.person_rounded,
-                title: 'Premium Member',
-                subtitle: '${library.likedCount} liked tracks',
-                trailing: const Icon(Icons.chevron_right_rounded, color: GlassColors.textSecondary),
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(height: 14),
-            _HeaderSection(
-              title: 'THEME',
-              child: Column(
-                children: [
-                  _SwitchRow(
-                    title: 'Dark Mode',
-                    subtitle: 'Optimize for OLED displays',
-                    value: isDark,
-                    onChanged: (v) => context.read<ThemeCubit>().toggleTheme(v),
-                  ),
-                  _SwitchRow(
-                    title: 'Pure Black',
-                    subtitle: 'Sonic Void aesthetic',
-                    value: true,
-                    onChanged: (_) {},
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.section),
             _HeaderSection(
               title: 'AUDIO',
               child: Column(
@@ -91,55 +76,132 @@ class SettingsScreen extends StatelessWidget {
                     trailing: const Icon(Icons.chevron_right_rounded, color: GlassColors.textSecondary),
                     onTap: () {},
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      const Icon(Icons.swap_calls_rounded, color: Color(0xFF00E639)),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Crossfade',
+                              style: GoogleFonts.inter(
+                                color: GlassColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              '$_crossfadeSeconds sec',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFFB9CCB2),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: const Color(0xFF00FF41),
+                      inactiveTrackColor: const Color(0x33FFFFFF),
+                      thumbColor: const Color(0xFF00FF41),
+                      overlayColor: const Color(0x4400FF41),
+                    ),
+                    child: Slider(
+                      min: 1,
+                      max: 12,
+                      divisions: 11,
+                      value: _crossfadeSeconds.toDouble(),
+                      label: '$_crossfadeSeconds s',
+                      onChanged: (value) {
+                        setState(() {
+                          _crossfadeSeconds = value.round().clamp(1, 12);
+                        });
+                      },
+                      onChangeEnd: (value) {
+                        _audioService.setCrossfadeSeconds(value.round().clamp(1, 12));
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.section),
             _HeaderSection(
-              title: 'STORAGE',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cache Usage',
-                    style: GoogleFonts.inter(
-                      color: GlassColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF353535),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: FractionallySizedBox(
-                      widthFactor: 0.24,
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00FF41),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '2.4 GB / 10 GB',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFFB9CCB2),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              title: 'DISPLAY',
+              child: _SwitchRow(
+                icon: Icons.speed_rounded,
+                title: 'Force Max Refresh Rate',
+                subtitle: 'Run at highest supported refresh rate (up to 120Hz)',
+                value: _forceMaxRefreshRate,
+                onChanged: (value) async {
+                  setState(() {
+                    _forceMaxRefreshRate = value;
+                  });
+                  await _displayRefreshService.setForceMaxRefreshRate(value);
+                },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SwitchRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF00E639)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: GlassColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFB9CCB2),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch.adaptive(
+          value: value,
+          activeThumbColor: const Color(0xFF00FF41),
+          activeTrackColor: const Color(0x6600FF41),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }
@@ -227,58 +289,6 @@ class _ListTileRow extends StatelessWidget {
             trailing,
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SwitchRow extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SwitchRow({
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: GlassColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFFB9CCB2),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: const Color(0xFF00FF41),
-            activeTrackColor: const Color(0x4400FF41),
-          ),
-        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/spotify_public_service.dart';
@@ -14,6 +15,8 @@ class ImportScreen extends StatefulWidget {
 
 class _ImportScreenState extends State<ImportScreen> {
   final TextEditingController _controller = TextEditingController();
+  final LocalLibraryService _library = getIt<LocalLibraryService>();
+
   bool _isLoading = false;
   double _progress = 0;
   String _progressLabel = '';
@@ -29,7 +32,6 @@ class _ImportScreenState extends State<ImportScreen> {
     });
     try {
       final service = getIt<SpotifyPublicService>();
-      final library = getIt<LocalLibraryService>();
 
       String type = 'unknown';
       if (url.contains('track')) {
@@ -43,7 +45,7 @@ class _ImportScreenState extends State<ImportScreen> {
       if (type == 'track') {
         final id = url.split('track/').last.split('?').first;
         final track = await service.getTrack(id);
-        await library.addLikedSong(track);
+        await _library.addLikedSong(track);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Added ${track.title} to Liked Songs')),
@@ -65,7 +67,7 @@ class _ImportScreenState extends State<ImportScreen> {
           },
         );
         setState(() => _progressLabel = 'Saving playlist...');
-        await library.savePlaylist(info, tracks);
+        await _library.savePlaylist(info, tracks);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Imported playlist ${info.name} (${tracks.length} tracks)')),
@@ -87,7 +89,7 @@ class _ImportScreenState extends State<ImportScreen> {
           },
         );
         setState(() => _progressLabel = 'Saving album...');
-        await library.savePlaylist(info, tracks);
+        await _library.savePlaylist(info, tracks);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Imported album ${info.name} (${tracks.length} tracks)')),
@@ -119,10 +121,13 @@ class _ImportScreenState extends State<ImportScreen> {
       backgroundColor: const Color(0xFF131313),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, 140),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               Row(
                 children: [
                   IconButton(
@@ -139,13 +144,13 @@ class _ImportScreenState extends State<ImportScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xl),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1B1B1B),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
                   border: const Border(
                     left: BorderSide(color: Color(0xFF00FF41), width: 3),
                   ),
@@ -154,31 +159,31 @@ class _ImportScreenState extends State<ImportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Folder Permissions',
+                      'Spotify Link Import',
                       style: GoogleFonts.inter(
                         color: GlassColors.textPrimary,
                         fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                        fontSize: 19,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Paste a Spotify track, album, or playlist URL below to import.',
                       style: GoogleFonts.inter(
                         color: const Color(0xFFB9CCB2),
                         fontWeight: FontWeight.w500,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xl),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1F1F1F),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: TextField(
                   controller: _controller,
@@ -187,11 +192,12 @@ class _ImportScreenState extends State<ImportScreen> {
                     border: InputBorder.none,
                     hintText: 'https://open.spotify.com/...',
                     hintStyle: GoogleFonts.inter(color: const Color(0xFFB9CCB2)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
                     prefixIcon: const Icon(Icons.link_rounded, color: Color(0xFF00E639)),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xl),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -207,8 +213,8 @@ class _ImportScreenState extends State<ImportScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00FF41),
                     foregroundColor: const Color(0xFF003907),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.xl)),
                     textStyle: GoogleFonts.inter(
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1,
@@ -218,7 +224,7 @@ class _ImportScreenState extends State<ImportScreen> {
                 ),
               ),
               if (_isLoading) ...[
-                const SizedBox(height: 14),
+                const SizedBox(height: AppSpacing.xl),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
@@ -228,7 +234,7 @@ class _ImportScreenState extends State<ImportScreen> {
                     color: const Color(0xFF00FF41),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm + 2),
                 Text(
                   _progressLabel,
                   style: GoogleFonts.inter(
@@ -238,7 +244,9 @@ class _ImportScreenState extends State<ImportScreen> {
                   ),
                 ),
               ],
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

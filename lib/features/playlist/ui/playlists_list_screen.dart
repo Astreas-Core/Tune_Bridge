@@ -26,6 +26,73 @@ class PlaylistsListScreen extends StatelessWidget {
 class _PlaylistsContent extends StatelessWidget {
   const _PlaylistsContent();
 
+  Future<void> _confirmAndDeletePlaylist(
+    BuildContext context, {
+    required String playlistId,
+    required String playlistName,
+  }) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF171717),
+          title: Text(
+            'Delete playlist?',
+            style: GoogleFonts.inter(
+              color: const Color(0xFFEBFFE2),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: Text(
+            '"$playlistName" will be removed from imported playlists.',
+            style: GoogleFonts.inter(
+              color: const Color(0xFFB9CCB2),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFB9CCB2),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                'Delete',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFFF6B6B),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !context.mounted) return;
+
+    try {
+      await getIt<LocalLibraryService>().removePlaylist(playlistId);
+      if (!context.mounted) return;
+      context.read<PlaylistsBloc>().add(const PlaylistsRequested());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Deleted "$playlistName"')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete playlist: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,6 +137,11 @@ class _PlaylistsContent extends StatelessWidget {
                           },
                         );
                       },
+                      onDelete: () => _confirmAndDeletePlaylist(
+                        context,
+                        playlistId: playlist.id,
+                        playlistName: playlist.name,
+                      ),
                     ),
                   );
                 },
@@ -220,12 +292,14 @@ class _PlaylistTile extends StatelessWidget {
   final int trackCount;
   final String? imageUrl;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const _PlaylistTile({
     required this.name,
     required this.trackCount,
     this.imageUrl,
     required this.onTap,
+    required this.onDelete,
   });
 
   @override
@@ -283,6 +357,14 @@ class _PlaylistTile extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              onPressed: onDelete,
+              tooltip: 'Delete playlist',
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Color(0xFFFF6B6B),
               ),
             ),
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF00FF41)),

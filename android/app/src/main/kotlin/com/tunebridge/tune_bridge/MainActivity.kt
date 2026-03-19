@@ -1,6 +1,7 @@
 package com.tunebridge.tune_bridge
 
 import android.content.Intent
+import android.os.Build
 import androidx.annotation.NonNull
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -9,6 +10,7 @@ import android.media.audiofx.Equalizer
 
 class MainActivity : AudioServiceActivity() {
     private val CHANNEL = "com.tunebridge/equalizer"
+    private val DISPLAY_CHANNEL = "com.tunebridge/display_refresh"
 
     companion object {
         private var equalizer: Equalizer? = null
@@ -75,6 +77,44 @@ class MainActivity : AudioServiceActivity() {
             } catch (e: Exception) {
                 result.error("ERROR", e.message, null)
             }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DISPLAY_CHANNEL).setMethodCallHandler { call, result ->
+            try {
+                if (call.method == "setForceMaxRefreshRate") {
+                    val enabled = call.argument<Boolean>("enabled") ?: false
+                    applyRefreshRateMode(enabled)
+                    result.success(true)
+                } else {
+                    result.notImplemented()
+                }
+            } catch (e: Exception) {
+                result.error("ERROR", e.message, null)
+            }
+        }
+    }
+
+    private fun applyRefreshRateMode(forceMax: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+
+        val attrs = window.attributes
+        if (!forceMax) {
+            attrs.preferredDisplayModeId = 0
+            window.attributes = attrs
+            return
+        }
+
+        val modes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display?.supportedModes ?: emptyArray()
+        } else {
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.supportedModes
+        }
+
+        val bestMode = modes.maxByOrNull { it.refreshRate }
+        if (bestMode != null) {
+            attrs.preferredDisplayModeId = bestMode.modeId
+            window.attributes = attrs
         }
     }
 
