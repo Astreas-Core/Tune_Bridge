@@ -1,17 +1,61 @@
-# tune_bridge
+# TuneBridge
 
-A new Flutter project.
+TuneBridge is a Flutter music app focused on local library playback, playlist management, Spotify import/auth flows, and a rich now-playing experience.
 
-## Getting Started
+## Requirements
 
-This project is a starting point for a Flutter application.
+- Flutter 3.41.4 (stable)
+- Dart 3.11.1
+- Android SDK configured for Flutter
 
-A few resources to get you started if this is your first Flutter project:
+## Run Locally
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+1. Install dependencies:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+	flutter pub get
+
+2. Run the app:
+
+	flutter run
+
+## Build Release Artifacts
+
+Build APK:
+
+flutter build apk --release
+
+Output:
+
+build/app/outputs/flutter-apk/app-release.apk
+
+Build Android App Bundle (recommended for stores):
+
+flutter build appbundle --release
+
+Output:
+
+build/app/outputs/bundle/release/app-release.aab
+
+## Signing Notes
+
+This repository ignores local Android signing files:
+
+- android/key.properties
+- android/local.properties
+
+Create your own keystore and key.properties locally before publishing to an app store.
+
+## Suggested GitHub Release Flow
+
+1. Commit your changes.
+2. Create a version tag (example: v1.0.0).
+3. Push commits and tag to GitHub.
+4. Create a GitHub Release from that tag.
+5. Attach app-release.apk (and optionally app-release.aab) to the release.
+
+## Quality Checks
+
+- flutter test
+- flutter analyze
+
+Note: The project currently has analyzer info-level hints in one file, but release builds and tests pass.

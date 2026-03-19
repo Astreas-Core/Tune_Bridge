@@ -17,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateToHome();
   }
 
-  _navigateToHome() async {
+  Future<void> _navigateToHome() async {
     // Simulate loading time or initialization
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
