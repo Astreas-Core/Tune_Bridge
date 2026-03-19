@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
+import 'package:tune_bridge/core/services/app_update_service.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
 import 'package:tune_bridge/core/services/display_refresh_service.dart';
 import 'package:tune_bridge/features/settings/ui/equalizer_screen.dart';
 import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,16 +20,57 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final AudioPlayerService _audioService;
   late final DisplayRefreshService _displayRefreshService;
+  late final AppUpdateService _appUpdateService;
   late int _crossfadeSeconds;
   late bool _forceMaxRefreshRate;
+  bool _isCheckingUpdate = false;
+  bool _hasUpdate = false;
+  String? _latestVersion;
+  String? _downloadUrl;
+  String _updateMessage = 'Tap to check for updates';
 
   @override
   void initState() {
     super.initState();
     _audioService = getIt<AudioPlayerService>();
     _displayRefreshService = getIt<DisplayRefreshService>();
+    _appUpdateService = getIt<AppUpdateService>();
     _crossfadeSeconds = _audioService.crossfadeSeconds.clamp(1, 12);
     _forceMaxRefreshRate = _displayRefreshService.isForceMaxRefreshRateEnabled;
+  }
+
+  Future<void> _checkForUpdates() async {
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateMessage = 'Checking for updates...';
+    });
+
+    final packageInfo = await PackageInfo.fromPlatform();
+    final result = await _appUpdateService.checkForUpdate(
+      currentVersion: packageInfo.version,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isCheckingUpdate = false;
+      _hasUpdate = result.hasUpdate;
+      _latestVersion = result.latestVersion;
+      _downloadUrl = result.apkUrl ?? result.releasePageUrl;
+      _updateMessage = result.message;
+    });
+  }
+
+  Future<void> _openUpdateLink() async {
+    if (_downloadUrl == null || _downloadUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No update link available yet.')),
+      );
+      return;
+    }
+
+    final uri = Uri.tryParse(_downloadUrl!);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -144,6 +188,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   });
                   await _displayRefreshService.setForceMaxRefreshRate(value);
                 },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.section),
+            _HeaderSection(
+              title: 'UPDATES',
+              child: Column(
+                children: [
+                  _ListTileRow(
+                    icon: Icons.system_update_alt_rounded,
+                    title: _hasUpdate
+                        ? 'Update available${_latestVersion != null ? ' (v$_latestVersion)' : ''}'
+                        : 'Check for updates',
+                    subtitle: _updateMessage,
+                    trailing: _isCheckingUpdate
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            _hasUpdate
+                                ? Icons.download_rounded
+                                : Icons.refresh_rounded,
+                            color: GlassColors.textSecondary,
+                          ),
+                    onTap: _isCheckingUpdate
+                        ? () {}
+                        : _hasUpdate
+                            ? _openUpdateLink
+                            : _checkForUpdates,
+                  ),
+                  if (_hasUpdate) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openUpdateLink,
+                        icon: const Icon(Icons.open_in_new_rounded),
+                        label: const Text('Download Update'),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

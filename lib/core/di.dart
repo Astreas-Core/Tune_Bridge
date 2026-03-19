@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:tune_bridge/core/services/audio_handler.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
+import 'package:tune_bridge/core/services/app_update_service.dart';
 import 'package:tune_bridge/core/services/display_refresh_service.dart';
 import 'package:tune_bridge/core/services/download_service.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
@@ -25,6 +26,7 @@ void setupServiceLocator(
       () => AudioPlayerService(audioHandler));
   getIt.registerLazySingleton<DownloadService>(() => DownloadService());
   getIt.registerLazySingleton<DisplayRefreshService>(() => DisplayRefreshService());
+  getIt.registerLazySingleton<AppUpdateService>(() => AppUpdateService());
 
   // Repositories
   // (Removed unused OAuth repositories)

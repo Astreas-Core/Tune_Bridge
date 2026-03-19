@@ -17,6 +17,12 @@ class AppConstants {
   'playlist-read-collaborative',
 ];
 
+  // GitHub release updates (set these before using in-app update checker)
+  static const String githubOwner = 'Astreas-Core';
+  static const String githubRepo = 'Tune_Bridge';
+  static const String githubLatestReleaseApi =
+      'https://api.github.com/repos/$githubOwner/$githubRepo/releases/latest';
+
   // Pagination
   static const int defaultPageSize = 20;
 

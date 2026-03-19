@@ -53,6 +53,23 @@ Create your own keystore and key.properties locally before publishing to an app 
 4. Create a GitHub Release from that tag.
 5. Attach app-release.apk (and optionally app-release.aab) to the release.
 
+## In-App Update Checker (GitHub Releases)
+
+The Settings screen includes an Update section that checks your latest GitHub release and opens the APK download link.
+
+Before using it, configure these constants in lib/core/constants.dart:
+
+- githubOwner
+- githubRepo
+
+Then publish releases with semantic tags like v1.0.1 and include an APK asset in each release.
+
+Behavior:
+
+- The app compares installed version with latest release tag.
+- If a newer version exists, users can tap Download Update.
+- Android will prompt users to confirm APK installation (manual confirmation is required).
+
 ## Quality Checks
 
 - flutter test
