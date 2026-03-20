@@ -7,6 +7,7 @@ class PlayerState extends Equatable {
   final int queueIndex;
   final bool isPlaying;
   final bool isLoading;
+  final bool isTrackSwitching;
   final Duration position;
   final Duration duration;
   final bool shuffleEnabled;
@@ -19,6 +20,7 @@ class PlayerState extends Equatable {
     this.queueIndex = 0,
     this.isPlaying = false,
     this.isLoading = false,
+    this.isTrackSwitching = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.shuffleEnabled = false,
@@ -36,6 +38,7 @@ class PlayerState extends Equatable {
     int? queueIndex,
     bool? isPlaying,
     bool? isLoading,
+    bool? isTrackSwitching,
     Duration? position,
     Duration? duration,
     bool? shuffleEnabled,
@@ -49,6 +52,7 @@ class PlayerState extends Equatable {
       queueIndex: queueIndex ?? this.queueIndex,
       isPlaying: isPlaying ?? this.isPlaying,
       isLoading: isLoading ?? this.isLoading,
+      isTrackSwitching: isTrackSwitching ?? this.isTrackSwitching,
       position: position ?? this.position,
       duration: duration ?? this.duration,
       shuffleEnabled: shuffleEnabled ?? this.shuffleEnabled,
@@ -64,6 +68,7 @@ class PlayerState extends Equatable {
         queueIndex,
         isPlaying,
         isLoading,
+        isTrackSwitching,
         position,
         duration,
         shuffleEnabled,

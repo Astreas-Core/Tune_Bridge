@@ -11,6 +11,7 @@ class SongTile extends StatelessWidget {
   final String? heroTag;
   final VoidCallback? onTap;
   final VoidCallback? onMorePressed;
+  final IconData moreIcon;
   final bool isPlaying;
 
   const SongTile({
@@ -21,6 +22,7 @@ class SongTile extends StatelessWidget {
     this.heroTag,
     this.onTap,
     this.onMorePressed,
+    this.moreIcon = Icons.more_horiz_rounded,
     this.isPlaying = false,
   });
 
@@ -89,7 +91,7 @@ class SongTile extends StatelessWidget {
               else if (onMorePressed != null)
                 IconButton(
                   onPressed: onMorePressed,
-                  icon: const Icon(Icons.more_horiz_rounded, color: GlassColors.textSecondary),
+                  icon: Icon(moreIcon, color: GlassColors.textSecondary),
                 ),
             ],
           ),

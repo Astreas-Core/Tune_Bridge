@@ -7,6 +7,11 @@ class YouTubeService {
   final Logger _log = Logger();
   final YoutubeExplode _yt = YoutubeExplode();
 
+  String _preferredThumbnailUrl(String videoId, String fallbackUrl) {
+    // hqdefault is generally stable and usually cleaner than extracted frame thumbs.
+    return 'https://i.ytimg.com/vi/$videoId/hqdefault.jpg';
+  }
+
   /// General search method for UI, returning list of tracks.
   Future<List<TrackModel>> search(String query) async {
     try {
@@ -17,7 +22,10 @@ class YouTubeService {
           title: video.title,
           artist: video.author,
           albumName: 'YouTube',
-          albumArtUrl: video.thumbnails.highResUrl,
+          albumArtUrl: _preferredThumbnailUrl(
+            video.id.value,
+            video.thumbnails.highResUrl,
+          ),
           durationMs: video.duration?.inMilliseconds ?? 0,
           youtubeVideoId: video.id.value,
         );

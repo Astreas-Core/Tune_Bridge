@@ -88,7 +88,7 @@ class _SearchViewState extends State<_SearchView> {
                           context.read<SearchBloc>().add(SearchQueryCommitted(value));
                         },
                         textInputAction: TextInputAction.search,
-                        textAlign: TextAlign.center,
+                        textAlign: TextAlign.start,
                         textAlignVertical: TextAlignVertical.center,
                         style: GoogleFonts.inter(
                           color: GlassColors.textPrimary,
@@ -187,7 +187,7 @@ class _SearchViewState extends State<_SearchView> {
                     );
                   }
 
-                  if (state is SearchInitial && state.history.isNotEmpty) {
+                  if (state is SearchInitial) {
                     return ListView(
                       padding: const EdgeInsets.fromLTRB(18, 8, 18, 140),
                       children: [
@@ -220,27 +220,45 @@ class _SearchViewState extends State<_SearchView> {
                             ),
                           ],
                         ),
-                        ...List.generate(state.history.length, (index) {
-                          final item = state.history[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.history_rounded, color: Color(0xFFB9CCB2)),
-                            title: Text(
-                              item,
+                        if (state.history.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 18),
+                            child: Text(
+                              'Your recent searches will appear here',
+                              textAlign: TextAlign.left,
                               style: GoogleFonts.inter(
-                                color: GlassColors.textPrimary,
-                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFB9CCB2),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            onTap: () {
-                              _controller.text = item;
-                              _controller.selection = TextSelection.fromPosition(
-                                TextPosition(offset: item.length),
-                              );
-                              _onChanged(item);
-                            },
-                          );
-                        }),
+                          )
+                        else
+                          ...List.generate(state.history.length, (index) {
+                            final item = state.history[index];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(
+                                Icons.history_rounded,
+                                color: Color(0xFFB9CCB2),
+                              ),
+                              title: Text(
+                                item,
+                                textAlign: TextAlign.left,
+                                style: GoogleFonts.inter(
+                                  color: GlassColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              onTap: () {
+                                _controller.text = item;
+                                _controller.selection = TextSelection.fromPosition(
+                                  TextPosition(offset: item.length),
+                                );
+                                _onChanged(item);
+                              },
+                            );
+                          }),
                       ],
                     );
                   }

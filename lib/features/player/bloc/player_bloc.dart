@@ -89,7 +89,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     if (state.currentTrack?.id == event.track.id) {
        if (!state.isPlaying) {
          await _audioService.resume();
-         emit(state.copyWith(isPlaying: true));
+         emit(state.copyWith(isPlaying: true, isTrackSwitching: false));
        }
        // If already playing, do nothing (prevent restart)
        _transitionInProgress = false;
@@ -113,6 +113,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       queueIndex: index,
       isLoading: true,
       isPlaying: false,
+      isTrackSwitching: true,
       position: Duration.zero,
       duration: Duration.zero,
       shuffleEnabled: effectiveShuffleEnabled,
@@ -168,7 +169,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
             await _audioService.initEqualizer();
             await _audioService.smoothFadeInAfterStart();
             await _libraryService.addRecentTrack(resolvedTrack);
-            emit(state.copyWith(isLoading: false, isPlaying: true));
+            emit(
+              state.copyWith(
+                isLoading: false,
+                isPlaying: true,
+                isTrackSwitching: false,
+              ),
+            );
             _schedulePrefetchForNext();
             return;
           } catch (e) {
@@ -190,7 +197,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           await _audioService.initEqualizer();
           await _audioService.smoothFadeInAfterStart();
           await _libraryService.addRecentTrack(resolvedTrack);
-          emit(state.copyWith(isPlaying: true, isLoading: false));
+          emit(
+            state.copyWith(
+              isPlaying: true,
+              isLoading: false,
+              isTrackSwitching: false,
+            ),
+          );
           _schedulePrefetchForNext();
           return;
         } catch (_) {
@@ -207,6 +220,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         if (videoId == null) {
           emit(state.copyWith(
             isLoading: false,
+            isTrackSwitching: false,
             error: 'Could not find "${resolvedTrack.title}" on YouTube',
           ));
           return;
@@ -227,6 +241,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           if (attempt == 0) continue;
           emit(state.copyWith(
             isLoading: false,
+            isTrackSwitching: false,
             error: 'Could not get audio stream',
           ));
           return;
@@ -248,7 +263,10 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           await _audioService.smoothFadeInAfterStart();
           await _libraryService.addRecentTrack(resolvedTrack);
           emit(state.copyWith(
-              isPlaying: true, isLoading: false)); 
+            isPlaying: true,
+            isLoading: false,
+            isTrackSwitching: false,
+          ));
           _schedulePrefetchForNext();
           return; // success!
         } catch (e) {
@@ -264,6 +282,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       if (e.toString().contains('interrupted')) return;
       emit(state.copyWith(
         isLoading: false,
+        isTrackSwitching: false,
         error: 'Playback error: $e',
       ));
     }
@@ -358,6 +377,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       currentTrack: nextTrack,
       queueIndex: nextIndex,
       isLoading: true,
+      isPlaying: false,
+      isTrackSwitching: true,
       position: Duration.zero,
       duration: Duration.zero,
       repeatEnabled: false,
@@ -411,6 +432,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       currentTrack: prevTrack,
       queueIndex: prevIndex,
       isLoading: true,
+      isPlaying: false,
+      isTrackSwitching: true,
       position: Duration.zero,
       duration: Duration.zero,
       repeatEnabled: false,
@@ -457,9 +480,11 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerProcessingStateChanged event,
     Emitter<PlayerState> emit,
   ) {
+    final switchingFinished = state.isTrackSwitching && event.isPlaying;
     emit(state.copyWith(
       isLoading: event.isBuffering,
       isPlaying: event.isPlaying,
+      isTrackSwitching: switchingFinished ? false : state.isTrackSwitching,
     ));
   }
 
@@ -488,6 +513,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       emit(state.copyWith(
         isPlaying: true,
         isLoading: false,
+        isTrackSwitching: false,
         position: Duration.zero,
       ));
       return;

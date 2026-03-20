@@ -23,7 +23,7 @@ class AudioPlayerService {
   int get crossfadeSeconds => _handler.crossfadeDuration.inSeconds;
 
   Future<void> setCrossfadeSeconds(int seconds) async {
-    await _handler.setCrossfadeDuration(Duration(seconds: seconds.clamp(1, 12)));
+    await _handler.setCrossfadeDuration(Duration(seconds: seconds.clamp(0, 12)));
   }
 
   /// Play a YouTube audio stream URL or local file path with metadata.

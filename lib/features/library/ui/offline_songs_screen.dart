@@ -57,6 +57,60 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
     );
   }
 
+  Future<void> _confirmDelete(TrackModel song) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF171717),
+          title: Text(
+            'Remove offline song?',
+            style: GoogleFonts.inter(
+              color: GlassColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: Text(
+            'This will remove "${song.title}" from offline storage.',
+            style: GoogleFonts.inter(
+              color: GlassColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(color: GlassColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'Delete',
+                style: GoogleFonts.inter(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    await _library.removeOfflineSong(song.id, deleteFile: true);
+    _loadSongs();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Removed ${song.title} from offline songs')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,6 +200,8 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
                               albumArtUrl: song.albumArtUrl,
                               heroTag: 'art-${song.id}',
                               onTap: () => _playSong(index),
+                              onMorePressed: () => _confirmDelete(song),
+                              moreIcon: Icons.delete_outline_rounded,
                             );
                           },
                         ),

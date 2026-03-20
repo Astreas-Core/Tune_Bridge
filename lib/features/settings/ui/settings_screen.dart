@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:tune_bridge/core/constants.dart';
@@ -25,6 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late bool _forceMaxRefreshRate;
   bool _isCheckingUpdate = false;
   bool _hasUpdate = false;
+  bool _isOffline = false;
   String? _latestVersion;
   String? _downloadUrl;
   String _updateMessage = 'Tap to check for updates';
@@ -35,8 +37,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _audioService = getIt<AudioPlayerService>();
     _displayRefreshService = getIt<DisplayRefreshService>();
     _appUpdateService = getIt<AppUpdateService>();
-    _crossfadeSeconds = _audioService.crossfadeSeconds.clamp(1, 12);
+    _crossfadeSeconds = _audioService.crossfadeSeconds.clamp(0, 12);
     _forceMaxRefreshRate = _displayRefreshService.isForceMaxRefreshRateEnabled;
+    _checkConnectivity();
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await InternetAddress.lookup('example.com')
+          .timeout(const Duration(seconds: 3));
+      final online = result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+      if (!mounted) return;
+      setState(() {
+        _isOffline = !online;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isOffline = true;
+      });
+    }
   }
 
   Future<void> _checkForUpdates() async {
@@ -130,14 +150,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Crossfade',
+                              'Transition Fade',
                               style: GoogleFonts.inter(
                                 color: GlassColors.textPrimary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             Text(
-                              '$_crossfadeSeconds sec',
+                              _crossfadeSeconds == 0
+                                  ? 'Off'
+                                  : '$_crossfadeSeconds sec',
                               style: GoogleFonts.inter(
                                 color: const Color(0xFFB9CCB2),
                                 fontSize: 12,
@@ -156,18 +178,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       overlayColor: const Color(0x4400FF41),
                     ),
                     child: Slider(
-                      min: 1,
+                      min: 0,
                       max: 12,
-                      divisions: 11,
+                      divisions: 12,
                       value: _crossfadeSeconds.toDouble(),
                       label: '$_crossfadeSeconds s',
                       onChanged: (value) {
                         setState(() {
-                          _crossfadeSeconds = value.round().clamp(1, 12);
+                          _crossfadeSeconds = value.round().clamp(0, 12);
                         });
                       },
                       onChangeEnd: (value) {
-                        _audioService.setCrossfadeSeconds(value.round().clamp(1, 12));
+                        _audioService.setCrossfadeSeconds(value.round().clamp(0, 12));
                       },
                     ),
                   ),
@@ -195,6 +217,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'UPDATES',
               child: Column(
                 children: [
+                  _ListTileRow(
+                    icon: _isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+                    title: _isOffline ? 'Offline' : 'Online',
+                    subtitle: _isOffline
+                        ? 'Connect to internet for update checks'
+                        : 'Network is available',
+                    trailing: Icon(
+                      _isOffline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
+                      color: _isOffline
+                          ? const Color(0xFFFF7A7A)
+                          : const Color(0xFF00FF41),
+                    ),
+                    onTap: _checkConnectivity,
+                  ),
                   _ListTileRow(
                     icon: Icons.system_update_alt_rounded,
                     title: _hasUpdate

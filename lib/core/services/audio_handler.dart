@@ -13,7 +13,7 @@ class TuneBridgeAudioHandler extends BaseAudioHandler
     with QueueHandler, SeekHandler {
   final _player = AudioPlayer();
   final Logger _log = Logger();
-  Duration _crossfadeDuration = const Duration(seconds: 3);
+  Duration _crossfadeDuration = Duration.zero;
 
   // Streams for external control (e.g. BLoC)
   final _skipNextController = StreamController<void>.broadcast();
@@ -39,8 +39,8 @@ class TuneBridgeAudioHandler extends BaseAudioHandler
     await _player.setVolume(1.0);
 
     final box = Hive.box(AppConstants.settingsBox);
-    final rawCrossfade = box.get('crossfade_seconds', defaultValue: 3);
-    final clamped = (rawCrossfade is int ? rawCrossfade : 3).clamp(1, 12);
+    final rawCrossfade = box.get('crossfade_seconds', defaultValue: 0);
+    final clamped = (rawCrossfade is int ? rawCrossfade : 0).clamp(0, 12);
     _crossfadeDuration = Duration(seconds: clamped);
 
     // Propagate playback events to audio_service clients
@@ -85,7 +85,7 @@ class TuneBridgeAudioHandler extends BaseAudioHandler
   Duration get crossfadeDuration => _crossfadeDuration;
 
   Future<void> setCrossfadeDuration(Duration duration) async {
-    final seconds = duration.inSeconds.clamp(1, 12);
+    final seconds = duration.inSeconds.clamp(0, 12);
     _crossfadeDuration = Duration(seconds: seconds);
     final box = Hive.box(AppConstants.settingsBox);
     await box.put('crossfade_seconds', seconds);

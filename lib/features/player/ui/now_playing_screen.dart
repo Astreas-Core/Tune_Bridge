@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -109,6 +111,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
     return darkened.withValues(alpha: alpha);
   }
 
+  bool _useWideArtworkFrame(TrackModel track) {
+    final album = track.albumName.trim().toLowerCase();
+    if (album == 'youtube') return true;
+    return track.youtubeVideoId != null && track.youtubeVideoId == track.id;
+  }
+
   Future<void> _toggleLike() async {
     final track = context.read<PlayerBloc>().state.currentTrack;
     if (track == null) return;
@@ -169,11 +177,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           previous.queueIndex != current.queueIndex,
       builder: (context, state) {
         final track = state.currentTrack;
-        if (track == null || (state.isLoading && !state.isPlaying)) {
+        if (track == null || state.isTrackSwitching) {
           return const _NowPlayingSkeleton();
         }
 
         _syncTrackFlags(track);
+        final useWideArtworkFrame = _useWideArtworkFrame(track);
 
         return Scaffold(
           backgroundColor: GlassColors.background,
@@ -234,15 +243,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                         letterSpacing: 0.3,
                                       ),
                                     ),
-                                    Text(
-                                      track.albumName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.inter(
-                                        color: GlassColors.textPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                    const SizedBox(height: 2),
+                                    _HeaderMiniVisualizer(
+                                      active: state.isPlaying,
                                     ),
                                   ],
                                 ),
@@ -287,14 +290,63 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                                 size: 88,
                                                 color: GlassColors.textSecondary,
                                               )
-                                            : CachedNetworkImage(
-                                                imageUrl: track.albumArtUrl!,
-                                                fit: BoxFit.cover,
-                                                errorWidget: (_, __, ___) => const Icon(
-                                                  Icons.music_note_rounded,
-                                                  size: 88,
-                                                  color: GlassColors.textSecondary,
-                                                ),
+                                            : Stack(
+                                                fit: StackFit.expand,
+                                                children: [
+                                                  CachedNetworkImage(
+                                                    imageUrl: track.albumArtUrl!,
+                                                    fit: BoxFit.cover,
+                                                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                                                  ),
+                                                  Positioned.fill(
+                                                    child: ImageFiltered(
+                                                      imageFilter: ImageFilter.blur(
+                                                        sigmaX: 20,
+                                                        sigmaY: 20,
+                                                      ),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl: track.albumArtUrl!,
+                                                        fit: BoxFit.cover,
+                                                        errorWidget: (_, __, ___) =>
+                                                            const SizedBox.shrink(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned.fill(
+                                                    child: DecoratedBox(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.black.withValues(alpha: 0.20),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.all(12),
+                                                    child: Center(
+                                                      child: AnimatedContainer(
+                                                        duration: const Duration(milliseconds: 260),
+                                                        curve: Curves.easeOutCubic,
+                                                        child: AspectRatio(
+                                                          aspectRatio: useWideArtworkFrame
+                                                              ? (16 / 9)
+                                                              : 1,
+                                                          child: ClipRRect(
+                                                            borderRadius: BorderRadius.circular(14),
+                                                            child: CachedNetworkImage(
+                                                              imageUrl: track.albumArtUrl!,
+                                                              fit: BoxFit.cover,
+                                                              errorWidget: (_, __, ___) =>
+                                                                  const Icon(
+                                                                    Icons.music_note_rounded,
+                                                                    size: 88,
+                                                                    color: GlassColors.textSecondary,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                       ),
                                     ),
@@ -630,42 +682,112 @@ class _NowPlayingSkeleton extends StatelessWidget {
     return Scaffold(
       backgroundColor: GlassColors.background,
       body: SafeArea(
-        child: Shimmer.fromColors(
-          baseColor: const Color(0xFF232A33),
-          highlightColor: const Color(0xFF2F3B47),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    _skeletonBox(32, 32, radius: 16),
-                    const Spacer(),
-                    _skeletonBox(92, 14),
-                    const Spacer(),
-                    _skeletonBox(32, 32, radius: 16),
-                  ],
-                ),
-                const SizedBox(height: 28),
-                _skeletonBox(double.infinity, 330, radius: 26),
-                const SizedBox(height: 26),
-                Align(alignment: Alignment.centerLeft, child: _skeletonBox(220, 24)),
-                const SizedBox(height: 8),
-                Align(alignment: Alignment.centerLeft, child: _skeletonBox(150, 14)),
-                const SizedBox(height: 22),
-                _skeletonBox(double.infinity, 4, radius: 3),
-                const SizedBox(height: 26),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _skeletonBox(44, 44, radius: 22),
-                    _skeletonBox(54, 54, radius: 27),
-                    _skeletonBox(76, 76, radius: 38),
-                    _skeletonBox(54, 54, radius: 27),
-                    _skeletonBox(44, 44, radius: 22),
-                  ],
-                ),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0E0E0E),
+                Color(0xFF131313),
+                Color(0xFF0E0E0E),
               ],
+            ),
+          ),
+          child: Shimmer.fromColors(
+            baseColor: const Color(0xFF232A33),
+            highlightColor: const Color(0xFF2F3B47),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _skeletonBox(34, 34, radius: 17),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            _skeletonBox(92, 10, radius: 6),
+                            const SizedBox(height: 8),
+                            _skeletonBox(128, 12, radius: 6),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _skeletonBox(40, 40, radius: 14),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Center(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 26),
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: _skeletonBox(double.infinity, double.infinity, radius: 26),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _skeletonBox(220, 26, radius: 8),
+                                  const SizedBox(height: 8),
+                                  _skeletonBox(130, 16, radius: 8),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _skeletonBox(44, 44, radius: 14),
+                            const SizedBox(width: 8),
+                            _skeletonBox(44, 44, radius: 14),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _skeletonBox(double.infinity, 4, radius: 3),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _skeletonBox(38, 12, radius: 6),
+                            _skeletonBox(38, 12, radius: 6),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _skeletonBox(44, 44, radius: 22),
+                            const SizedBox(width: 12),
+                            _skeletonBox(54, 54, radius: 27),
+                            const SizedBox(width: 6),
+                            _skeletonBox(76, 76, radius: 38),
+                            const SizedBox(width: 6),
+                            _skeletonBox(54, 54, radius: 27),
+                            const SizedBox(width: 12),
+                            _skeletonBox(44, 44, radius: 22),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -770,6 +892,68 @@ class _PlayButton extends StatelessWidget {
           color: const Color(0xFF003907),
           size: 42,
         ),
+      ),
+    );
+  }
+}
+
+class _HeaderMiniVisualizer extends StatefulWidget {
+  final bool active;
+
+  const _HeaderMiniVisualizer({required this.active});
+
+  @override
+  State<_HeaderMiniVisualizer> createState() => _HeaderMiniVisualizerState();
+}
+
+class _HeaderMiniVisualizerState extends State<_HeaderMiniVisualizer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 36,
+      height: 12,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final t = _controller.value;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(4, (i) {
+              final wave = (0.25 + ((t + i * 0.18) % 1.0));
+              final h = widget.active ? (3 + (wave * 7)) : 3.0;
+              return Container(
+                width: 3,
+                height: h,
+                margin: const EdgeInsets.symmetric(horizontal: 1),
+                decoration: BoxDecoration(
+                  color: widget.active
+                      ? const Color(0xFF00FF41)
+                      : GlassColors.textSecondary.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

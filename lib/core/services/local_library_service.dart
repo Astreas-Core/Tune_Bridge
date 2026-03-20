@@ -437,6 +437,29 @@ class LocalLibraryService {
     await _offlineBox.put(track.id, _trackToJson(track));
     _log.i('Saved offline: ${track.title}');
   }
+
+  Future<void> removeOfflineSong(String trackId, {bool deleteFile = true}) async {
+    final existing = getOfflineSongById(trackId);
+    if (existing == null) return;
+
+    _invalidateKnownTracksCache();
+    await _offlineBox.delete(trackId);
+
+    if (deleteFile) {
+      final path = existing.localPath;
+      if (path != null && path.isNotEmpty) {
+        final file = File(path);
+        if (file.existsSync()) {
+          try {
+            await file.delete();
+          } catch (e) {
+            _log.w('Failed to delete offline file at $path: $e');
+          }
+        }
+      }
+    }
+    _log.i('Removed offline song: ${existing.title}');
+  }
   
   bool isOffline(String trackId) {
     return _offlineBox.containsKey(trackId);

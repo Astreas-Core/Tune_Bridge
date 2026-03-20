@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:tune_bridge/core/services/audio_handler.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
+import 'package:tune_bridge/core/services/artist_image_service.dart';
 import 'package:tune_bridge/core/services/app_update_service.dart';
 import 'package:tune_bridge/core/services/display_refresh_service.dart';
 import 'package:tune_bridge/core/services/download_service.dart';
@@ -22,6 +23,7 @@ void setupServiceLocator(
   getIt.registerLazySingleton<SpotifyPublicService>(
       () => SpotifyPublicService());
   getIt.registerLazySingleton<YouTubeService>(() => YouTubeService());
+  getIt.registerLazySingleton<ArtistImageService>(() => ArtistImageService());
   getIt.registerLazySingleton<AudioPlayerService>(
       () => AudioPlayerService(audioHandler));
   getIt.registerLazySingleton<DownloadService>(() => DownloadService());

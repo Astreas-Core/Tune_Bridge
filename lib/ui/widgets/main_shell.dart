@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,7 +26,6 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  static const _lastUpdateCheckAtMsKey = 'last_update_check_at_ms';
   static const _dismissedUpdateVersionKey = 'dismissed_update_version';
 
   int _currentIndex = 0;
@@ -32,20 +34,48 @@ class _MainShellState extends State<MainShell> {
   bool _showUpdateBanner = false;
   String? _latestVersion;
   String? _downloadUrl;
+  bool _isOffline = false;
+  Timer? _connectivityTimer;
 
   @override
   void initState() {
     super.initState();
     _updateService = getIt<AppUpdateService>();
     _runStartupUpdateCheck();
+    _startConnectivityMonitor();
   }
 
   // Removed _screens list to define in build for reactivity
 
   @override
   void dispose() {
+    _connectivityTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _startConnectivityMonitor() {
+    _checkConnectivity();
+    _connectivityTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      _checkConnectivity();
+    });
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await InternetAddress.lookup('example.com')
+          .timeout(const Duration(seconds: 3));
+      final online = result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+      if (!mounted) return;
+      setState(() {
+        _isOffline = !online;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isOffline = true;
+      });
+    }
   }
 
   void _onItemTapped(int index) {
@@ -59,15 +89,6 @@ class _MainShellState extends State<MainShell> {
   Future<void> _runStartupUpdateCheck() async {
     try {
       final settingsBox = Hive.box(AppConstants.settingsBox);
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-      final lastMs = settingsBox.get(_lastUpdateCheckAtMsKey, defaultValue: 0) as int;
-      const cooldown = Duration(hours: 24);
-
-      if (nowMs - lastMs < cooldown.inMilliseconds) {
-        return;
-      }
-
-      await settingsBox.put(_lastUpdateCheckAtMsKey, nowMs);
 
       final packageInfo = await PackageInfo.fromPlatform();
       final result = await _updateService.checkForUpdate(
@@ -203,6 +224,43 @@ class _MainShellState extends State<MainShell> {
                           foregroundColor: const Color(0xFF041105),
                         ),
                         child: const Text('Update'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            if (_isOffline)
+              Positioned(
+                left: AppSpacing.sm,
+                right: AppSpacing.sm,
+                top: mediaQuery.padding.top + AppSpacing.sm + (_showUpdateBanner ? 58 : 0),
+                child: GlassPanel(
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                  blur: 0,
+                  color: const Color(0xCC2A1313),
+                  borderColor: const Color(0x66FF6B6B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.wifi_off_rounded,
+                        color: Color(0xFFFF7A7A),
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Offline mode: some features may be limited',
+                          style: GoogleFonts.inter(
+                            color: GlassColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ),
