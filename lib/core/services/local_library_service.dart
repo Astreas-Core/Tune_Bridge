@@ -16,6 +16,7 @@ class LocalLibraryService {
   static const _playlistsBoxName = 'local_playlists';
   static const _playlistTracksPrefix = 'playlist_tracks_';
   static const _recentBoxName = 'recent_tracks';
+  static const _skipBoxName = 'skip_data';
 
   // static const _offlineBoxName = 'offline_songs'; // Already defined
 
@@ -25,6 +26,7 @@ class LocalLibraryService {
   late Box _playlistsBox;
   late Box _offlineBox;
   late Box _recentBox;
+  late Box _skipBox;
   List<TrackModel>? _knownTracksCache;
   int _knownTracksCacheAtMs = 0;
 
@@ -33,6 +35,7 @@ class LocalLibraryService {
     _playlistsBox = await Hive.openBox(_playlistsBoxName);
     _offlineBox = await Hive.openBox(_offlineBoxName);
     _recentBox = await Hive.openBox(_recentBoxName);
+    _skipBox = await Hive.openBox(_skipBoxName);
     _log.i('LocalLibraryService initialised '
       '(${_likedBox.length} liked, ${_playlistsBox.length} playlists, ${_offlineBox.length} offline, ${_recentBox.length} recent)');
   }
@@ -159,6 +162,25 @@ class LocalLibraryService {
 
   ValueListenable<Box> get recentTracksListenable => _recentBox.listenable();
 
+  // ── Skip Tracking (Continuous Learning) ─────────────────────
+
+  /// Record a skip — stores artist skip count for penalty in recommendations.
+  Future<void> recordSkip(TrackModel track) async {
+    final artistKey = track.artist.trim().toLowerCase();
+    if (artistKey.isEmpty || artistKey == 'unknown') return;
+
+    final current = (_skipBox.get(artistKey, defaultValue: 0) as int);
+    await _skipBox.put(artistKey, current + 1);
+  }
+
+  /// Get the skip penalty for an artist (0.0 = never skipped).
+  double _skipPenalty(String artistKey) {
+    final count = (_skipBox.get(artistKey, defaultValue: 0) as int);
+    if (count <= 0) return 0.0;
+    // Diminishing penalty: 0.4, 0.6, 0.73, 0.8, ...
+    return 0.8 * (1.0 - 1.0 / (1.0 + count * 0.5));
+  }
+
   /// Returns a deduplicated view of all locally known tracks.
   /// Includes liked, offline, playlist tracks and recent history.
   Future<List<TrackModel>> getAllKnownTracks() {
@@ -172,30 +194,37 @@ class LocalLibraryService {
     }
 
     final dedup = <String, TrackModel>{};
+    final seenTitles = <String>{};
+
+    void addTrack(TrackModel t) {
+      final fp = _trackFingerprint(t);
+      if (dedup.containsKey(fp)) return;
+      // Also skip if normalized title already seen (same song, different ID/channel)
+      final titleKey = _normalizedTitleKey(t.title);
+      if (titleKey.length > 2 && seenTitles.contains(titleKey)) return;
+      dedup[fp] = t;
+      if (titleKey.length > 2) seenTitles.add(titleKey);
+    }
 
     for (final raw in _likedBox.values) {
-      final t = _trackFromJson(raw);
-      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+      addTrack(_trackFromJson(raw));
     }
 
     for (final raw in _offlineBox.values) {
-      final t = _trackFromJson(raw);
-      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+      addTrack(_trackFromJson(raw));
     }
 
     for (final playlistId in _playlistsBox.keys.map((e) => e.toString())) {
       final box = await Hive.openBox('$_playlistTracksPrefix$playlistId');
       for (final raw in box.values) {
-        final t = _trackFromJson(raw);
-        dedup.putIfAbsent(_trackFingerprint(t), () => t);
+        addTrack(_trackFromJson(raw));
       }
     }
 
     // Include history tracks as a fallback candidate set.
     for (final raw in _recentBox.values) {
       final m = Map<String, dynamic>.from(raw as Map);
-      final t = _trackFromJson(m['track']);
-      dedup.putIfAbsent(_trackFingerprint(t), () => t);
+      addTrack(_trackFromJson(m['track']));
     }
 
     final result = dedup.values.toList(growable: false);
@@ -357,6 +386,9 @@ class LocalLibraryService {
     }
     score += semanticBoost;
 
+    // Penalty for frequently skipped artists
+    score -= _skipPenalty(artistKey);
+
     // Tiny deterministic jitter allows frequent refresh changes without random junk.
     final hashJitter = ((_trackFingerprint(track).hashCode ^ seed) & 0xFF) / 255.0;
     score += hashJitter * 0.18;
@@ -374,6 +406,7 @@ class LocalLibraryService {
     final selected = <TrackModel>[];
     final artistUsage = <String, int>{};
     final languageUsage = <String, int>{};
+    final selectedTitleKeys = <String>{};
 
     final topWindow = ranked.take(math.min(18, ranked.length)).toList(growable: true);
     final tail = ranked.skip(topWindow.length).toList(growable: false);
@@ -394,6 +427,14 @@ class LocalLibraryService {
         final entry = remaining[i];
         final artist = entry.track.artist.toLowerCase().trim();
         final lang = entry.features.language;
+        final titleKey = _normalizedTitleKey(entry.track.title);
+
+        // Hard skip if same song title was already picked
+        if (titleKey.length > 2 && selectedTitleKeys.contains(titleKey)) {
+          remaining.removeAt(i);
+          i--;
+          continue;
+        }
 
         final diversityPenalty =
             (artistUsage[artist] ?? 0) * 0.9 + (languageUsage[lang] ?? 0) * 0.35;
@@ -405,19 +446,36 @@ class LocalLibraryService {
         }
       }
 
+      if (remaining.isEmpty) break;
+
       final picked = remaining.removeAt(bestIdx);
       selected.add(picked.track);
       final artist = picked.track.artist.toLowerCase().trim();
       final lang = picked.features.language;
+      final titleKey = _normalizedTitleKey(picked.track.title);
       artistUsage[artist] = (artistUsage[artist] ?? 0) + 1;
       languageUsage[lang] = (languageUsage[lang] ?? 0) + 1;
+      if (titleKey.length > 2) selectedTitleKeys.add(titleKey);
     }
 
     return selected;
   }
 
   String _trackFingerprint(TrackModel t) {
-    return '${t.id}::${t.title.toLowerCase().trim()}::${t.artist.toLowerCase().trim()}';
+    final normTitle = _normalizedTitleKey(t.title);
+    return '${t.id}::$normTitle::${t.artist.toLowerCase().trim()}';
+  }
+
+  /// Normalize a title for dedup — strips parentheses, brackets, noise words,
+  /// and special characters so the same song from different channels matches.
+  String _normalizedTitleKey(String title) {
+    return title
+        .toLowerCase()
+        .replaceAll(RegExp(r'\(.*?\)|\[.*?\]'), '')
+        .replaceAll(RegExp(r'\b(official|video|lyrics|audio|music|hd|hq|mv|full|visualizer|song|track|version|remastered|remaster)\b'), '')
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   void _invalidateKnownTracksCache() {

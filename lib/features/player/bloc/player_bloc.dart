@@ -347,6 +347,15 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     if (_transitionInProgress) return;
     _transitionInProgress = true;
 
+    // Record skip if the user skipped early (< 30% of the track)
+    final current = state.currentTrack;
+    if (current != null && state.duration.inMilliseconds > 0) {
+      final progress = state.position.inMilliseconds / state.duration.inMilliseconds;
+      if (progress < 0.30) {
+        _libraryService.recordSkip(current);
+      }
+    }
+
     if (state.queue.isEmpty) {
       _transitionInProgress = false;
       return;

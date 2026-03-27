@@ -358,6 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final uniqueById = <String>{};
     final uniqueByIdentity = <String>{};
+    final uniqueByTitle = <String>{};
     final out = <TrackModel>[];
 
     void addIfUnique(TrackModel track) {
@@ -365,12 +366,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final id = track.id.trim();
       final identity = _titleArtistKey(track.title, track.artist);
+      final titleKey = _normalizeTitle(track.title);
 
       if (id.isNotEmpty && uniqueById.contains(id)) return;
       if (identity.isNotEmpty && uniqueByIdentity.contains(identity)) return;
+      if (titleKey.isNotEmpty && uniqueByTitle.contains(titleKey)) return;
 
       if (id.isNotEmpty) uniqueById.add(id);
       if (identity.isNotEmpty) uniqueByIdentity.add(identity);
+      if (titleKey.isNotEmpty) uniqueByTitle.add(titleKey);
       out.add(track);
     }
 
@@ -437,6 +441,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final discovered = <TrackModel>[];
     final discoveredIdentity = <String>{};
+    final discoveredTitleKey = <String>{};
     final discoveredArtistUsage = <String, int>{};
 
     for (final query in queries.take(10)) {
@@ -449,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       for (final track in results) {
         final artistKey = track.artist.trim().toLowerCase();
-        if ((discoveredArtistUsage[artistKey] ?? 0) >= 2) continue;
+        if ((discoveredArtistUsage[artistKey] ?? 0) >= 1) continue;
         if (knownIds.contains(track.id)) continue;
         if (_isLowQualityCandidate(track)) continue;
 
@@ -457,8 +462,13 @@ class _HomeScreenState extends State<HomeScreen> {
         if (knownIdentity.contains(identity)) continue;
         if (discoveredIdentity.contains(identity)) continue;
 
+        // Title-only dedup: prevents same song from different channels
+        final titleOnly = _normalizeTitle(track.title);
+        if (discoveredTitleKey.contains(titleOnly)) continue;
+
         discovered.add(track);
         discoveredIdentity.add(identity);
+        discoveredTitleKey.add(titleOnly);
         discoveredArtistUsage[artistKey] = (discoveredArtistUsage[artistKey] ?? 0) + 1;
 
         if (discovered.length >= limit) {
@@ -477,16 +487,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _titleArtistKey(String title, String artist) {
-    String normalize(String value) {
-      return value
-          .toLowerCase()
-          .replaceAll(RegExp(r'\(.*?\)|\[.*?\]'), ' ')
-          .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
-          .replaceAll(RegExp(r'\s+'), ' ')
-          .trim();
-    }
+    return '${_normalizeTitle(title)}::${_normalizeTitle(artist)}';
+  }
 
-    return '${normalize(title)}::${normalize(artist)}';
+  /// Normalize a title for dedup — strips parentheses, brackets, noise words,
+  /// and special characters so the same song from different channels matches.
+  String _normalizeTitle(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'\(.*?\)|\[.*?\]'), ' ')
+        .replaceAll(RegExp(r'\b(official|video|lyrics|audio|music|hd|hq|mv|full|visualizer|version|remastered|remaster|song|track)\b'), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   bool _isLowQualityCandidate(TrackModel track) {
@@ -496,7 +509,13 @@ class _HomeScreenState extends State<HomeScreen> {
         text.contains('reverb') ||
         text.contains('8d') ||
         text.contains('nightcore') ||
-        text.contains('instrumental');
+        text.contains('instrumental') ||
+        text.contains('cover') ||
+        text.contains('reaction') ||
+        text.contains('tutorial') ||
+        text.contains('mashup') ||
+        text.contains('compilation') ||
+        text.contains('ringtone');
   }
 
   Future<List<_TopArtist>> _loadTopArtists({required int seed}) async {

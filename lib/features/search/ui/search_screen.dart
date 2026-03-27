@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/routes.dart';
+import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
@@ -22,7 +23,7 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SearchBloc(getIt<YouTubeService>()),
+      create: (_) => SearchBloc(getIt<YouTubeService>(), getIt<LocalLibraryService>()),
       child: _SearchView(showBackButton: showBackButton),
     );
   }
@@ -171,6 +172,7 @@ class _SearchViewState extends State<_SearchView> {
                             title: track.title,
                             subtitle: track.artist,
                             artUrl: track.albumArtUrl,
+                            durationMs: track.durationMs,
                             onTap: () {
                               context.read<PlayerBloc>().add(
                                     PlayerPlayTrack(
@@ -236,27 +238,39 @@ class _SearchViewState extends State<_SearchView> {
                         else
                           ...List.generate(state.history.length, (index) {
                             final item = state.history[index];
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: const Icon(
-                                Icons.history_rounded,
-                                color: Color(0xFFB9CCB2),
-                              ),
-                              title: Text(
-                                item,
-                                textAlign: TextAlign.left,
-                                style: GoogleFonts.inter(
-                                  color: GlassColors.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              onTap: () {
-                                _controller.text = item;
-                                _controller.selection = TextSelection.fromPosition(
-                                  TextPosition(offset: item.length),
-                                );
-                                _onChanged(item);
+                            return Dismissible(
+                              key: ValueKey('history_$item'),
+                              direction: DismissDirection.endToStart,
+                              onDismissed: (_) {
+                                context.read<SearchBloc>().add(SearchHistoryItemRemoved(item));
                               },
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                child: const Icon(Icons.delete_rounded, color: Color(0xFFFF4444), size: 20),
+                              ),
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: const Icon(
+                                  Icons.history_rounded,
+                                  color: Color(0xFFB9CCB2),
+                                ),
+                                title: Text(
+                                  item,
+                                  textAlign: TextAlign.left,
+                                  style: GoogleFonts.inter(
+                                    color: GlassColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                onTap: () {
+                                  _controller.text = item;
+                                  _controller.selection = TextSelection.fromPosition(
+                                    TextPosition(offset: item.length),
+                                  );
+                                  _onChanged(item);
+                                },
+                              ),
                             );
                           }),
                       ],
@@ -360,14 +374,24 @@ class _SearchRow extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? artUrl;
+  final int _durationMs;
   final VoidCallback onTap;
 
   const _SearchRow({
     required this.title,
     required this.subtitle,
     required this.artUrl,
+    required int durationMs,
     required this.onTap,
-  });
+  }) : _durationMs = durationMs;
+
+  static String _formatDuration(int ms) {
+    if (ms <= 0) return '';
+    final total = Duration(milliseconds: ms);
+    final minutes = total.inMinutes;
+    final seconds = total.inSeconds.remainder(60);
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -417,14 +441,15 @@ class _SearchRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              '3:42',
-              style: GoogleFonts.inter(
-                color: const Color(0xFFB9CCB2),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+            if (_durationMs > 0)
+              Text(
+                _formatDuration(_durationMs),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFB9CCB2),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
             const SizedBox(width: 8),
             const Icon(Icons.more_vert_rounded, color: GlassColors.textSecondary),
           ],

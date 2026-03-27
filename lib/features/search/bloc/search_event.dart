@@ -28,3 +28,12 @@ class SearchQueryCommitted extends SearchEvent {
 class SearchHistoryCleared extends SearchEvent {
   const SearchHistoryCleared();
 }
+
+class SearchHistoryItemRemoved extends SearchEvent {
+  final String query;
+
+  const SearchHistoryItemRemoved(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
