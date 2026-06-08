@@ -37,11 +37,11 @@ class AudioPlayerService {
     try {
       final uri = Uri.parse(url);
       final extras = <String, dynamic>{
-        if (title != null) 'title': title,
-        if (artist != null) 'artist': artist,
-        if (album != null) 'album': album,
-        if (artUri != null) 'artUri': artUri,
-        if (durationMs != null) 'duration': durationMs,
+        'title': ?title,
+        'artist': ?artist,
+        'album': ?album,
+        'artUri': ?artUri,
+        'duration': ?durationMs,
       };
 
       await _handler.playFromUri(uri, extras);

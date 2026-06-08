@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tune_bridge/core/constants.dart';
@@ -41,15 +42,15 @@ class _SplashScreenState extends State<SplashScreen> {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    Colors.deepPurple.shade900,
-                    Colors.purpleAccent.shade400,
+                    context.primaryColor,
+                    context.primaryColor.withValues(alpha: 0.5),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.purpleAccent.withValues(alpha: 0.3),
+                    color: context.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -60,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'assets/images/app_logo.png',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
+                    return Icon(
                       Icons.music_note_rounded,
                       size: 60,
                       color: Colors.white,
@@ -69,20 +70,20 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             // App Name
             Text(
               AppConstants.appName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 letterSpacing: 1.5,
               ),
             ),
-            const SizedBox(height: 48),
+            SizedBox(height: 48),
             // Loading Indicator
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(

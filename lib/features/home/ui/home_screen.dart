@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -14,7 +15,6 @@ import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
-import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       animation: appRefreshSignal,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: GlassColors.background,
+          backgroundColor: context.backgroundColor,
           body: SafeArea(
             child: FutureBuilder<_HomeData>(
               key: ValueKey(
@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 return RefreshIndicator(
                   onRefresh: _onRefreshAll,
-                  color: const Color(0xFF00FF41),
+                  color: context.primaryColor,
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(
                       parent: BouncingScrollPhysics(),
@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 'TuneBridge',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFFEBFFE2),
+                                  color: context.textPrimaryColor,
                                   fontSize: 34,
                                   fontWeight: FontWeight.w900,
                                   fontStyle: FontStyle.italic,
@@ -135,36 +135,36 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1F1F1F),
+                                  color: Color(0xFF1F1F1F),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person_rounded,
-                                  color: GlassColors.textSecondary,
+                                  color: context.textSecondaryColor,
                                   size: 20,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           'Curated for your latest listening',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFFB9CCB2),
+                            color: context.textSecondaryColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.xxl),
+                        SizedBox(height: AppSpacing.xxl),
                         Row(
                           children: [
                             Expanded(
                               child: Text(
                                 'Recommended',
                                 style: GoogleFonts.inter(
-                                  color: GlassColors.textPrimary,
+                                  color: context.textPrimaryColor,
                                   fontSize: 30,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.8,
@@ -176,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 'REFRESH',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFF00FF41),
+                                  color: context.primaryColor,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 10,
                                   letterSpacing: 1.2,
@@ -232,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             'Top artists for you',
                             style: GoogleFonts.inter(
-                              color: GlassColors.textPrimary,
+                              color: context.textPrimaryColor,
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -0.6,
@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             'REFRESH',
                             style: GoogleFonts.inter(
-                              color: const Color(0xFF00FF41),
+                              color: context.primaryColor,
                               fontWeight: FontWeight.w800,
                               fontSize: 10,
                               letterSpacing: 1.2,
@@ -291,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text(
                       'Recently Played',
                       style: GoogleFonts.inter(
-                        color: GlassColors.textPrimary,
+                        color: context.textPrimaryColor,
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.6,
@@ -637,7 +637,7 @@ class _RecommendationCard extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFF1F1F1F),
+                    color: Color(0xFF1F1F1F),
                     image: track.albumArtUrl == null
                         ? null
                         : DecorationImage(
@@ -646,20 +646,20 @@ class _RecommendationCard extends StatelessWidget {
                           ),
                   ),
                   child: track.albumArtUrl == null
-                      ? const Center(
-                          child: Icon(Icons.music_note_rounded, color: GlassColors.textSecondary, size: 36),
+                      ? Center(
+                          child: Icon(Icons.music_note_rounded, color: context.textSecondaryColor, size: 36),
                         )
                       : null,
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               track.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: GlassColors.textPrimary,
+                color: context.textPrimaryColor,
                 fontWeight: FontWeight.w800,
                 fontSize: isLarge ? 19 : 15,
               ),
@@ -669,7 +669,7 @@ class _RecommendationCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: const Color(0xFFB9CCB2),
+                color: context.textSecondaryColor,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
@@ -687,8 +687,8 @@ class _RecommendedSkeletonCarousel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFF232A33),
-      highlightColor: const Color(0xFF2F3B47),
+      baseColor: Color(0xFF232A33),
+      highlightColor: Color(0xFF2F3B47),
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         scrollDirection: Axis.horizontal,
@@ -724,7 +724,7 @@ class _RecommendationSkeletonCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Container(
             width: isLarge ? 210 : 140,
             height: isLarge ? 20 : 16,
@@ -733,7 +733,7 @@ class _RecommendationSkeletonCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             width: isLarge ? 120 : 90,
             height: 12,
@@ -788,7 +788,7 @@ class _TopArtistCard extends StatelessWidget {
               ),
               child: ClipOval(
                 child: Container(
-                  color: const Color(0xFF131A22),
+                  color: Color(0xFF131A22),
                   child: avatarUrl == null || avatarUrl.isEmpty
                       ? Center(
                           child: Text(
@@ -819,14 +819,14 @@ class _TopArtistCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: AppSpacing.sm),
             Text(
               artist.name,
               maxLines: 1,
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: GlassColors.textPrimary,
+                color: context.textPrimaryColor,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -844,8 +844,8 @@ class _TopArtistsSkeletonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFF232A33),
-      highlightColor: const Color(0xFF2F3B47),
+      baseColor: Color(0xFF232A33),
+      highlightColor: Color(0xFF2F3B47),
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         scrollDirection: Axis.horizontal,
@@ -873,12 +873,12 @@ class _TopArtistSkeletonCard extends StatelessWidget {
           Container(
             width: 132,
             height: 132,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          SizedBox(height: AppSpacing.sm),
           Container(
             width: 112,
             height: 16,
@@ -939,13 +939,13 @@ class _TrackRow extends StatelessWidget {
                 height: 58,
                 child: track.albumArtUrl == null
                     ? Container(
-                        color: const Color(0xFF1F1F1F),
-                        child: const Icon(Icons.music_note_rounded, color: GlassColors.textSecondary),
+                        color: Color(0xFF1F1F1F),
+                        child: Icon(Icons.music_note_rounded, color: context.textSecondaryColor),
                       )
                     : Image.network(track.albumArtUrl!, fit: BoxFit.cover),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -955,7 +955,7 @@ class _TrackRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: GlassColors.textPrimary,
+                      color: context.textPrimaryColor,
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
                     ),
@@ -965,7 +965,7 @@ class _TrackRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFB9CCB2),
+                      color: context.textSecondaryColor,
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
                     ),
@@ -973,7 +973,7 @@ class _TrackRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.more_vert_rounded, color: GlassColors.textSecondary),
+            Icon(Icons.more_vert_rounded, color: context.textSecondaryColor),
           ],
         ),
       ),
@@ -991,13 +991,13 @@ class _EmptyTopArtists extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadii.lg),
-          color: const Color(0xFF1B1B1B),
+          color: Color(0xFF1B1B1B),
         ),
         child: Center(
           child: Text(
             'Play and like songs to generate top artists',
             style: GoogleFonts.inter(
-              color: const Color(0xFFB9CCB2),
+              color: context.textSecondaryColor,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1017,13 +1017,13 @@ class _EmptyRecommendations extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadii.lg),
-          color: const Color(0xFF1B1B1B),
+          color: Color(0xFF1B1B1B),
         ),
         child: Center(
           child: Text(
             'Play a track to generate recommendations',
             style: GoogleFonts.inter(
-              color: const Color(0xFFB9CCB2),
+              color: context.textSecondaryColor,
               fontWeight: FontWeight.w600,
             ),
           ),

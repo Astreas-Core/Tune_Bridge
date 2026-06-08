@@ -8,6 +8,8 @@ import 'package:tune_bridge/core/services/download_service.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/spotify_public_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
+import 'package:tune_bridge/core/services/firebase_sync_service.dart';
+import 'package:tune_bridge/core/services/auth_service.dart';
 
 /// Global service locator.
 final getIt = GetIt.instance;
@@ -29,6 +31,8 @@ void setupServiceLocator(
   getIt.registerLazySingleton<DownloadService>(() => DownloadService());
   getIt.registerLazySingleton<DisplayRefreshService>(() => DisplayRefreshService());
   getIt.registerLazySingleton<AppUpdateService>(() => AppUpdateService());
+  getIt.registerLazySingleton<AuthService>(() => AuthService());
+  getIt.registerLazySingleton<FirebaseSyncService>(() => FirebaseSyncService());
 
   // Repositories
   // (Removed unused OAuth repositories)

@@ -6,6 +6,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
 import 'package:tune_bridge/core/models/playlist_model.dart';
+import 'package:tune_bridge/core/services/firebase_sync_service.dart';
+import 'package:tune_bridge/core/di.dart';
 
 /// Hive-backed local library for liked songs and imported playlists.
 /// No network access — all data is persisted on device.
@@ -38,6 +40,16 @@ class LocalLibraryService {
     _skipBox = await Hive.openBox(_skipBoxName);
     _log.i('LocalLibraryService initialised '
       '(${_likedBox.length} liked, ${_playlistsBox.length} playlists, ${_offlineBox.length} offline, ${_recentBox.length} recent)');
+  }
+
+  Future<void> clearAll() async {
+    await _likedBox.clear();
+    await _playlistsBox.clear();
+    await _offlineBox.clear();
+    await _recentBox.clear();
+    await _skipBox.clear();
+    _invalidateKnownTracksCache();
+    _log.i('LocalLibraryService: All local storage cleared.');
   }
   
   // ── Offline Songs ──────────────────────────────────────────────
@@ -546,22 +558,33 @@ class LocalLibraryService {
         .toList(); // newest first
   }
 
-  Future<void> addLikedSong(TrackModel track) async {
+  Future<void> addLikedSong(TrackModel track, {bool syncToCloud = true}) async {
     _invalidateKnownTracksCache();
     await _likedBox.put(track.id, _trackToJson(track));
+    if (syncToCloud) {
+      getIt<FirebaseSyncService>().uploadLikedSong(track);
+    }
     _log.i('Liked: ${track.title}');
   }
 
-  Future<void> addLikedSongs(List<TrackModel> tracks) async {
+  Future<void> addLikedSongs(List<TrackModel> tracks, {bool syncToCloud = true}) async {
     _invalidateKnownTracksCache();
     final entries = {for (final t in tracks) t.id: _trackToJson(t)};
     await _likedBox.putAll(entries);
+    if (syncToCloud) {
+      for (final track in tracks) {
+        getIt<FirebaseSyncService>().uploadLikedSong(track);
+      }
+    }
     _log.i('Added ${tracks.length} liked songs');
   }
 
-  Future<void> removeLikedSong(String trackId) async {
+  Future<void> removeLikedSong(String trackId, {bool syncToCloud = true}) async {
     _invalidateKnownTracksCache();
     await _likedBox.delete(trackId);
+    if (syncToCloud) {
+      getIt<FirebaseSyncService>().removeLikedSong(trackId);
+    }
   }
 
   bool isLiked(String trackId) => _likedBox.containsKey(trackId);
@@ -582,6 +605,7 @@ class LocalLibraryService {
   Future<void> savePlaylist(
     PlaylistModel playlist,
     List<TrackModel> tracks,
+    {bool syncToCloud = true}
   ) async {
     _invalidateKnownTracksCache();
     await _playlistsBox.put(playlist.id, _playlistToJson(playlist));
@@ -595,6 +619,9 @@ class LocalLibraryService {
       entries[key] = _trackToJson(t);
     }
     await box.putAll(entries);
+    if (syncToCloud) {
+      getIt<FirebaseSyncService>().uploadPlaylist(playlist, tracks);
+    }
     _log.i('Saved playlist "${playlist.name}" (${tracks.length} tracks)');
   }
 
@@ -604,7 +631,7 @@ class LocalLibraryService {
     return keys.map((k) => _trackFromJson(box.get(k))).toList();
   }
 
-  Future<void> removePlaylist(String playlistId) async {
+  Future<void> removePlaylist(String playlistId, {bool syncToCloud = true}) async {
     _invalidateKnownTracksCache();
     await _playlistsBox.delete(playlistId);
     if (Hive.isBoxOpen('$_playlistTracksPrefix$playlistId')) {
@@ -613,6 +640,9 @@ class LocalLibraryService {
     } else {
       final box = await Hive.openBox('$_playlistTracksPrefix$playlistId');
       await box.deleteFromDisk();
+    }
+    if (syncToCloud) {
+      getIt<FirebaseSyncService>().removeSyncedPlaylist(playlistId);
     }
     _log.i('Removed playlist $playlistId');
   }

@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,12 +33,12 @@ class _LikedSongsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: context.backgroundColor,
       body: BlocBuilder<LikedSongsBloc, LikedSongsState>(
         builder: (context, state) {
           if (state is LikedSongsLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: GlassColors.accent),
+            return Center(
+              child: CircularProgressIndicator(color: context.primaryColor),
             );
           }
 
@@ -63,8 +64,8 @@ class _LikedSongsView extends StatelessWidget {
                       child: GlassPanel(
                         blur: 0,
                         borderRadius: BorderRadius.circular(20),
-                        color: const Color(0xFF161616),
-                        borderColor: const Color(0x22FFFFFF),
+                        color: context.surfaceColor,
+                        borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
@@ -72,16 +73,16 @@ class _LikedSongsView extends StatelessWidget {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: const Color(0x1F00FF41),
+                                color: Color(0x1F00FF41),
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0x5000FF41)),
+                                border: Border.all(color: Color(0x5000FF41)),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.favorite_rounded,
-                                color: Color(0xFF00FF41),
+                                color: context.primaryColor,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +90,7 @@ class _LikedSongsView extends StatelessWidget {
                                   Text(
                                     'Liked Songs',
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFFEBFFE2),
+                                      color: context.textPrimaryColor,
                                       fontWeight: FontWeight.w900,
                                       fontSize: 22,
                                       letterSpacing: -0.5,
@@ -99,7 +100,7 @@ class _LikedSongsView extends StatelessWidget {
                                   Text(
                                     '${tracks.length} tracks',
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFFB9CCB2),
+                                      color: context.textSecondaryColor,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                     ),
@@ -121,7 +122,7 @@ class _LikedSongsView extends StatelessWidget {
                               child: Text(
                                 'Play',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFF00FF41),
+                                  color: context.primaryColor,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -191,16 +192,16 @@ class _BaseShell extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: Color(0xFF00FF41),
+                    color: context.primaryColor,
                   ),
                 ),
                 Expanded(
                   child: Text(
                     'Liked Songs.',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFEBFFE2),
+                      color: context.textPrimaryColor,
                       fontWeight: FontWeight.w900,
                       fontSize: 30,
                       letterSpacing: -0.8,
@@ -235,28 +236,28 @@ class _EmptyState extends StatelessWidget {
       child: GlassPanel(
         blur: 0,
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF161616),
-        borderColor: const Color(0x22FFFFFF),
+        color: context.surfaceColor,
+        borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 42, color: GlassColors.textSecondary),
-            const SizedBox(height: 10),
+            Icon(icon, size: 42, color: context.textSecondaryColor),
+            SizedBox(height: 10),
             Text(
               title,
               style: GoogleFonts.inter(
-                color: const Color(0xFFEBFFE2),
+                color: context.textPrimaryColor,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               subtitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                color: const Color(0xFFB9CCB2),
+                color: context.textSecondaryColor,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),

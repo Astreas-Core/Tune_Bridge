@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -49,8 +50,8 @@ class MiniPlayer extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _artwork(track),
-                const SizedBox(width: 10),
+                _artwork(context, track),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +61,7 @@ class MiniPlayer extends StatelessWidget {
                           track.title,
                           softWrap: false,
                           style: GoogleFonts.inter(
-                            color: const Color(0xFFEBFFE2),
+                            color: context.textPrimaryColor,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                             fontStyle: FontStyle.italic,
@@ -68,13 +69,13 @@ class MiniPlayer extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 1),
+                      SizedBox(height: 1),
                       Text(
                         track.artist,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9CCB2),
+                          color: context.textSecondaryColor,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -82,7 +83,7 @@ class MiniPlayer extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -90,7 +91,7 @@ class MiniPlayer extends StatelessWidget {
                       icon: Icons.skip_previous_rounded,
                       onTap: () => context.read<PlayerBloc>().add(const PlayerPrevious()),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     state.isLoading
                         ? const _CuteMiniLoading()
                         : _PillControlButton(
@@ -104,7 +105,7 @@ class MiniPlayer extends StatelessWidget {
                                   );
                             },
                           ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     _PillControlButton(
                       icon: Icons.skip_next_rounded,
                       onTap: () => context.read<PlayerBloc>().add(const PlayerNext()),
@@ -113,7 +114,7 @@ class MiniPlayer extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             BlocBuilder<PlayerBloc, ps.PlayerState>(
               buildWhen: (previous, current) => previous.position != current.position,
               builder: (context, positionState) {
@@ -132,17 +133,17 @@ class MiniPlayer extends StatelessWidget {
                           value: progress,
                           minHeight: 4,
                           backgroundColor:
-                              const Color(0xFFB9CCB2).withValues(alpha: 0.22),
+                              context.textSecondaryColor.withValues(alpha: 0.22),
                           valueColor:
-                              const AlwaysStoppedAnimation<Color>(Color(0xFF00FF41)),
+                              AlwaysStoppedAnimation<Color>(context.primaryColor),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       _formatDuration(positionState.position),
                       style: GoogleFonts.inter(
-                        color: const Color(0xFFB9CCB2),
+                        color: context.textSecondaryColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
                         fontFeatures: const [FontFeature.tabularFigures()],
@@ -167,8 +168,8 @@ class MiniPlayer extends StatelessWidget {
                 : GlassPanel(
                     borderRadius: BorderRadius.circular(40),
                     blur: 0,
-                    color: const Color(0xFF151515),
-                    borderColor: const Color(0x2400FF41),
+                    color: Color(0xFF151515),
+                    borderColor: context.primaryColor.withValues(alpha: 0.14),
                     padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
                     child: content,
                   ),
@@ -178,20 +179,20 @@ class MiniPlayer extends StatelessWidget {
     );
   }
 
-  Widget _artPlaceholder() {
+  Widget _artPlaceholder(BuildContext context) {
     return Container(
-      color: const Color(0xFF2A2A2A),
+      color: Color(0xFF2A2A2A),
       child: Center(
         child: Icon(
           Icons.music_note_rounded,
-          color: const Color(0xFFB9CCB2).withValues(alpha: 0.75),
+          color: context.textSecondaryColor.withValues(alpha: 0.75),
           size: 20,
         ),
       ),
     );
   }
 
-  Widget _artwork(dynamic track) {
+  Widget _artwork(BuildContext context, dynamic track) {
     final artwork = ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: SizedBox(
@@ -201,10 +202,10 @@ class MiniPlayer extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: track.albumArtUrl!,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => _artPlaceholder(),
-                errorWidget: (_, __, ___) => _artPlaceholder(),
+                placeholder: (_, __) => _artPlaceholder(context),
+                errorWidget: (_, __, ___) => _artPlaceholder(context),
               )
-            : _artPlaceholder(),
+            : _artPlaceholder(context),
       ),
     );
 
@@ -261,9 +262,9 @@ class _CuteMiniLoadingState extends State<_CuteMiniLoading>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _bar(level(0.0)),
-              const SizedBox(width: 2),
+              SizedBox(width: 2),
               _bar(level(1.6)),
-              const SizedBox(width: 2),
+              SizedBox(width: 2),
               _bar(level(3.2)),
             ],
           );
@@ -278,7 +279,7 @@ class _CuteMiniLoadingState extends State<_CuteMiniLoading>
       width: 4,
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFF00FF41).withValues(alpha: 0.45 + (t * 0.55)),
+        color: context.primaryColor.withValues(alpha: 0.45 + (t * 0.55)),
         borderRadius: BorderRadius.circular(3),
       ),
     );
@@ -307,16 +308,16 @@ class _PillControlButton extends StatelessWidget {
             width: isPrimary ? 36 : 32,
             height: isPrimary ? 36 : 32,
           decoration: BoxDecoration(
-            color: isPrimary ? const Color(0xFF00FF41) : const Color(0xFF242424),
+            color: isPrimary ? context.primaryColor : Color(0xFF242424),
               borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isPrimary ? const Color(0x6000FF41) : const Color(0x22FFFFFF),
+              color: isPrimary ? context.primaryColor.withValues(alpha: 0.38) : context.textPrimaryColor.withValues(alpha: 0.13),
             ),
           ),
           child: Icon(
             icon,
               size: isPrimary ? 20 : 18,
-            color: isPrimary ? const Color(0xFF003907) : const Color(0xFFEBFFE2),
+            color: isPrimary ? context.colorScheme.onPrimary : context.textPrimaryColor,
           ),
         ),
       ),

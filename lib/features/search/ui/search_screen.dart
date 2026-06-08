@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,7 +14,6 @@ import 'package:tune_bridge/features/player/bloc/player_event.dart';
 import 'package:tune_bridge/features/search/bloc/search_bloc.dart';
 import 'package:tune_bridge/features/search/bloc/search_event.dart';
 import 'package:tune_bridge/features/search/bloc/search_state.dart';
-import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class SearchScreen extends StatelessWidget {
   final bool showBackButton;
@@ -52,7 +52,7 @@ class _SearchViewState extends State<_SearchView> {
   void _onChanged(String query) {
     if (mounted) setState(() {});
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 250), () {
+    _debounce = Timer(Duration(milliseconds: 250), () {
       if (mounted) {
         context.read<SearchBloc>().add(SearchQueryChanged(query.trim()));
       }
@@ -62,7 +62,7 @@ class _SearchViewState extends State<_SearchView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
+      backgroundColor: Color(0xFF0E0E0E),
       body: SafeArea(
         child: Column(
           children: [
@@ -73,13 +73,13 @@ class _SearchViewState extends State<_SearchView> {
                   if (widget.showBackButton)
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
+                      icon: Icon(Icons.arrow_back_rounded, color: context.primaryColor),
                     ),
                   Expanded(
                     child: Container(
                       height: 54,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
+                        color: Color(0xFF2A2A2A),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: TextField(
@@ -92,7 +92,7 @@ class _SearchViewState extends State<_SearchView> {
                         textAlign: TextAlign.start,
                         textAlignVertical: TextAlignVertical.center,
                         style: GoogleFonts.inter(
-                          color: GlassColors.textPrimary,
+                          color: context.textPrimaryColor,
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
@@ -100,7 +100,7 @@ class _SearchViewState extends State<_SearchView> {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                           hintText: 'Artists, songs, or playlists',
                           hintStyle: GoogleFonts.inter(
-                            color: const Color(0xFFB9CCB2),
+                            color: context.textSecondaryColor,
                             fontWeight: FontWeight.w500,
                           ),
                           suffixIcon: _controller.text.isEmpty
@@ -110,7 +110,7 @@ class _SearchViewState extends State<_SearchView> {
                                     _controller.clear();
                                     _onChanged('');
                                   },
-                                  icon: const Icon(Icons.close_rounded, color: Color(0xFFB9CCB2)),
+                                  icon: Icon(Icons.close_rounded, color: context.textSecondaryColor),
                                 ),
                         ),
                       ),
@@ -119,13 +119,13 @@ class _SearchViewState extends State<_SearchView> {
                 ],
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Expanded(
               child: BlocBuilder<SearchBloc, SearchState>(
                 builder: (context, state) {
                   if (state is SearchLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+                    return Center(
+                      child: CircularProgressIndicator(color: context.primaryColor),
                     );
                   }
 
@@ -144,13 +144,13 @@ class _SearchViewState extends State<_SearchView> {
                         Text(
                           'Top Result',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFFB9CCB2),
+                            color: context.textSecondaryColor,
                             fontWeight: FontWeight.w800,
                             fontSize: 10,
                             letterSpacing: 1.5,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.sm + 2),
+                        SizedBox(height: AppSpacing.sm + 2),
                         _TopResultCard(
                           track: state.results.first,
                           onPlay: () {
@@ -165,7 +165,7 @@ class _SearchViewState extends State<_SearchView> {
                             Navigator.pushNamed(context, AppRoutes.nowPlaying);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         ...List.generate(state.results.length, (index) {
                           final track = state.results[index];
                           return _SearchRow(
@@ -199,7 +199,7 @@ class _SearchViewState extends State<_SearchView> {
                               child: Text(
                                 'SEARCH HISTORY',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFFB9CCB2),
+                                  color: context.textSecondaryColor,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 10,
                                   letterSpacing: 1.4,
@@ -208,12 +208,12 @@ class _SearchViewState extends State<_SearchView> {
                             ),
                             TextButton(
                               onPressed: () {
-                                context.read<SearchBloc>().add(const SearchHistoryCleared());
+                                context.read<SearchBloc>().add(SearchHistoryCleared());
                               },
                               child: Text(
                                 'CLEAR',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFF00FF41),
+                                  color: context.primaryColor,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 10,
                                   letterSpacing: 1.2,
@@ -229,7 +229,7 @@ class _SearchViewState extends State<_SearchView> {
                               'Your recent searches will appear here',
                               textAlign: TextAlign.left,
                               style: GoogleFonts.inter(
-                                color: const Color(0xFFB9CCB2),
+                                color: context.textSecondaryColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -247,19 +247,19 @@ class _SearchViewState extends State<_SearchView> {
                               background: Container(
                                 alignment: Alignment.centerRight,
                                 padding: const EdgeInsets.only(right: 20),
-                                child: const Icon(Icons.delete_rounded, color: Color(0xFFFF4444), size: 20),
+                                child: Icon(Icons.delete_rounded, color: Color(0xFFFF4444), size: 20),
                               ),
                               child: ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                leading: const Icon(
+                                leading: Icon(
                                   Icons.history_rounded,
-                                  color: Color(0xFFB9CCB2),
+                                  color: context.textSecondaryColor,
                                 ),
                                 title: Text(
                                   item,
                                   textAlign: TextAlign.left,
                                   style: GoogleFonts.inter(
-                                    color: GlassColors.textPrimary,
+                                    color: context.textPrimaryColor,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -299,7 +299,7 @@ class _TopResultCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1B1B),
+        color: Color(0xFF1B1B1B),
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Row(
@@ -311,13 +311,13 @@ class _TopResultCard extends StatelessWidget {
               height: 82,
               child: track.albumArtUrl == null
                   ? Container(
-                      color: const Color(0xFF2A2A2A),
-                      child: const Icon(Icons.music_note_rounded, color: GlassColors.textSecondary),
+                      color: Color(0xFF2A2A2A),
+                      child: Icon(Icons.music_note_rounded, color: context.textSecondaryColor),
                     )
                   : Image.network(track.albumArtUrl!, fit: BoxFit.cover),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,7 +327,7 @@ class _TopResultCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFFEBFFE2),
+                    color: context.textPrimaryColor,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     fontStyle: FontStyle.italic,
@@ -339,7 +339,7 @@ class _TopResultCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFFB9CCB2),
+                    color: context.textSecondaryColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -347,7 +347,7 @@ class _TopResultCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           InkWell(
             onTap: onPlay,
             borderRadius: BorderRadius.circular(20),
@@ -355,12 +355,12 @@ class _TopResultCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF00FF41),
+                color: context.primaryColor,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.play_arrow_rounded,
-                color: Color(0xFF003907),
+                color: context.colorScheme.onPrimary,
               ),
             ),
           ),
@@ -408,13 +408,13 @@ class _SearchRow extends StatelessWidget {
                 height: 48,
                 child: artUrl == null
                     ? Container(
-                        color: const Color(0xFF2A2A2A),
-                        child: const Icon(Icons.music_note_rounded, color: GlassColors.textSecondary),
+                        color: Color(0xFF2A2A2A),
+                        child: Icon(Icons.music_note_rounded, color: context.textSecondaryColor),
                       )
                     : Image.network(artUrl!, fit: BoxFit.cover),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +424,7 @@ class _SearchRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: GlassColors.textPrimary,
+                      color: context.textPrimaryColor,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -433,7 +433,7 @@ class _SearchRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFB9CCB2),
+                      color: context.textSecondaryColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -445,13 +445,13 @@ class _SearchRow extends StatelessWidget {
               Text(
                 _formatDuration(_durationMs),
                 style: GoogleFonts.inter(
-                  color: const Color(0xFFB9CCB2),
+                  color: context.textSecondaryColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-            const SizedBox(width: 8),
-            const Icon(Icons.more_vert_rounded, color: GlassColors.textSecondary),
+            SizedBox(width: 8),
+            Icon(Icons.more_vert_rounded, color: context.textSecondaryColor),
           ],
         ),
       ),
@@ -470,7 +470,7 @@ class _Message extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.inter(
-          color: const Color(0xFFB9CCB2),
+          color: context.textSecondaryColor,
           fontWeight: FontWeight.w600,
         ),
       ),

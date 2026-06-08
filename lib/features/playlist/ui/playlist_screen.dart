@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,12 +33,12 @@ class PlaylistScreen extends StatelessWidget {
         getIt<LocalLibraryService>(),
       )..add(PlaylistDetailRequested(playlistId)),
       child: Scaffold(
-        backgroundColor: GlassColors.background,
+        backgroundColor: context.backgroundColor,
         body: BlocBuilder<PlaylistDetailBloc, PlaylistDetailState>(
           builder: (context, state) {
             if (state is PlaylistDetailLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+              return Center(
+                child: CircularProgressIndicator(color: context.primaryColor),
               );
             }
 
@@ -53,9 +54,9 @@ class PlaylistScreen extends StatelessWidget {
                           children: [
                             IconButton(
                               onPressed: () => Navigator.pop(context),
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back_ios_new_rounded,
-                                color: Color(0xFF00FF41),
+                                color: context.primaryColor,
                               ),
                             ),
                             Expanded(
@@ -64,7 +65,7 @@ class PlaylistScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFFEBFFE2),
+                                  color: context.textPrimaryColor,
                                   fontSize: 30,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.8,
@@ -82,8 +83,8 @@ class PlaylistScreen extends StatelessWidget {
                         child: GlassPanel(
                           blur: 0,
                           borderRadius: BorderRadius.circular(22),
-                          color: const Color(0xFF161616),
-                          borderColor: const Color(0x22FFFFFF),
+                          color: context.surfaceColor,
+                          borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                           padding: const EdgeInsets.all(14),
                           child: Row(
                             children: [
@@ -96,12 +97,12 @@ class PlaylistScreen extends StatelessWidget {
                                       ? CachedNetworkImage(
                                           imageUrl: playlistImageUrl!,
                                           fit: BoxFit.cover,
-                                          errorWidget: (_, __, ___) => _placeholder(),
+                                          errorWidget: (_, __, ___) => _placeholder(context),
                                         )
-                                      : _placeholder(),
+                                      : _placeholder(context),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,17 +112,17 @@ class PlaylistScreen extends StatelessWidget {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: GoogleFonts.inter(
-                                        color: const Color(0xFFEBFFE2),
+                                        color: context.textPrimaryColor,
                                         fontSize: 22,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: -0.3,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4),
                                     Text(
                                       '${state.tracks.length} tracks',
                                       style: GoogleFonts.inter(
-                                        color: const Color(0xFFB9CCB2),
+                                        color: context.textSecondaryColor,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -133,12 +134,12 @@ class PlaylistScreen extends StatelessWidget {
                                 width: 42,
                                 height: 42,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF00FF41),
+                                  color: context.primaryColor,
                                   borderRadius: BorderRadius.circular(21),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.queue_music_rounded,
-                                  color: Color(0xFF03290C),
+                                  color: context.colorScheme.onPrimary,
                                 ),
                               ),
                             ],
@@ -152,7 +153,7 @@ class PlaylistScreen extends StatelessWidget {
                           child: Text(
                             'No tracks in this playlist',
                             style: GoogleFonts.inter(
-                              color: const Color(0xFFB9CCB2),
+                              color: context.textSecondaryColor,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
@@ -195,7 +196,7 @@ class PlaylistScreen extends StatelessWidget {
               return Center(
                 child: Text(
                   'Error loading playlist',
-                  style: GoogleFonts.inter(color: const Color(0xFFB9CCB2)),
+                  style: GoogleFonts.inter(color: context.textSecondaryColor),
                 ),
               );
             }
@@ -207,14 +208,14 @@ class PlaylistScreen extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
+  Widget _placeholder(BuildContext context) {
     return Container(
-      color: const Color(0xFF2A2A2A),
+      color: Color(0xFF2A2A2A),
       child: Center(
         child: Icon(
           Icons.queue_music_rounded,
           size: 60,
-          color: const Color(0xFFB9CCB2),
+          color: context.textSecondaryColor,
         ),
       ),
     );

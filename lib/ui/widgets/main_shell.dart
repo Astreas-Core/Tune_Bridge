@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -158,11 +159,11 @@ class _MainShellState extends State<MainShell> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: GlassColors.background,
+        backgroundColor: context.backgroundColor,
         body: Stack(
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -184,27 +185,27 @@ class _MainShellState extends State<MainShell> {
                 child: GlassPanel(
                   borderRadius: BorderRadius.circular(AppRadii.md),
                   blur: 0,
-                  color: const Color(0xDD171717),
-                  borderColor: const Color(0x3300FF41),
+                  color: Color(0xDD171717),
+                  borderColor: Color(0x3300FF41),
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
                     vertical: AppSpacing.sm,
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.system_update_alt_rounded,
-                        color: Color(0xFF00FF41),
+                        color: context.primaryColor,
                         size: 20,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           _latestVersion == null
                               ? 'Update available'
                               : 'Update available (v$_latestVersion)',
                           style: GoogleFonts.inter(
-                            color: GlassColors.textPrimary,
+                            color: context.textPrimaryColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -212,18 +213,18 @@ class _MainShellState extends State<MainShell> {
                       ),
                       TextButton(
                         onPressed: _dismissUpdateBanner,
-                        child: const Text('Later'),
+                        child: Text('Later'),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       FilledButton(
                         onPressed: _openUpdateLink,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           minimumSize: const Size(0, 32),
-                          backgroundColor: const Color(0xFF00FF41),
-                          foregroundColor: const Color(0xFF041105),
+                          backgroundColor: context.primaryColor,
+                          foregroundColor: Color(0xFF041105),
                         ),
-                        child: const Text('Update'),
+                        child: Text('Update'),
                       ),
                     ],
                   ),
@@ -238,25 +239,25 @@ class _MainShellState extends State<MainShell> {
                 child: GlassPanel(
                   borderRadius: BorderRadius.circular(AppRadii.md),
                   blur: 0,
-                  color: const Color(0xCC2A1313),
-                  borderColor: const Color(0x66FF6B6B),
+                  color: Color(0xCC2A1313),
+                  borderColor: Color(0x66FF6B6B),
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
                     vertical: AppSpacing.sm,
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.wifi_off_rounded,
                         color: Color(0xFFFF7A7A),
                         size: 20,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           'Offline mode: some features may be limited',
                           style: GoogleFonts.inter(
-                            color: GlassColors.textPrimary,
+                            color: context.textPrimaryColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -277,8 +278,8 @@ class _MainShellState extends State<MainShell> {
                 child: GlassPanel(
                   borderRadius: BorderRadius.circular(AppRadii.xl),
                   blur: 0,
-                  color: const Color(0xCC171717),
-                  borderColor: const Color(0x2200FF41),
+                  color: Color(0xCC171717),
+                  borderColor: context.primaryColor.withValues(alpha: 0.13),
                   padding: EdgeInsets.fromLTRB(
                     AppSpacing.sm,
                     AppSpacing.sm,
@@ -292,13 +293,13 @@ class _MainShellState extends State<MainShell> {
                         embedded: true,
                         margin: EdgeInsets.zero,
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      SizedBox(height: AppSpacing.sm),
                       Container(
                         height: 1,
                         margin: const EdgeInsets.symmetric(horizontal: 6),
-                        color: const Color(0x22FFFFFF),
+                        color: context.textPrimaryColor.withValues(alpha: 0.13),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Row(
                         children: [
                           _buildNavItem(Icons.home_rounded, 'Home', 0),
@@ -329,7 +330,7 @@ class _MainShellState extends State<MainShell> {
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF353535)
+                ? Color(0xFF353535)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadii.sm),
           ),
@@ -338,14 +339,14 @@ class _MainShellState extends State<MainShell> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? const Color(0xFFEBFFE2) : const Color(0xFFB9CCB2),
+                color: isSelected ? context.textPrimaryColor : context.textSecondaryColor,
                 size: 22,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 label.toUpperCase(),
                 style: GoogleFonts.inter(
-                  color: isSelected ? const Color(0xFFEBFFE2) : const Color(0xFFB9CCB2),
+                  color: isSelected ? context.textPrimaryColor : context.textSecondaryColor,
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   letterSpacing: 0.6,

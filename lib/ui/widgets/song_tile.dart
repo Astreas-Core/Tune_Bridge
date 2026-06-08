@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -37,9 +38,9 @@ class SongTile extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: albumArtUrl!,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => _artPlaceholder(),
+                errorWidget: (_, __, ___) => _artPlaceholder(context),
               )
-            : _artPlaceholder(),
+            : _artPlaceholder(context),
       ),
     );
 
@@ -49,15 +50,15 @@ class SongTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.lg),
         blur: 0,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
-        color: isPlaying ? const Color(0x33203B45) : const Color(0x33171B24),
-        borderColor: isPlaying ? const Color(0x5500D7FF) : const Color(0x22FFFFFF),
+        color: isPlaying ? Color(0x33203B45) : Color(0x33171B24),
+        borderColor: isPlaying ? Color(0x5500D7FF) : context.textPrimaryColor.withValues(alpha: 0.13),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadii.md),
           child: Row(
             children: [
               heroTag != null ? Hero(tag: heroTag!, child: artwork) : artwork,
-              const SizedBox(width: AppSpacing.md),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,18 +68,18 @@ class SongTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.splineSans(
-                        color: GlassColors.textPrimary,
+                        color: context.textPrimaryColor,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       artist,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.splineSans(
-                        color: GlassColors.textSecondary,
+                        color: context.textSecondaryColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -87,11 +88,11 @@ class SongTile extends StatelessWidget {
                 ),
               ),
               if (isPlaying)
-                const Icon(Icons.graphic_eq_rounded, color: GlassColors.accent)
+                Icon(Icons.graphic_eq_rounded, color: context.primaryColor)
               else if (onMorePressed != null)
                 IconButton(
                   onPressed: onMorePressed,
-                  icon: Icon(moreIcon, color: GlassColors.textSecondary),
+                  icon: Icon(moreIcon, color: context.textSecondaryColor),
                 ),
             ],
           ),
@@ -100,14 +101,14 @@ class SongTile extends StatelessWidget {
     );
   }
 
-  Widget _artPlaceholder() {
+  Widget _artPlaceholder(BuildContext context) {
     return Container(
-      color: const Color(0x33202836),
+      color: Color(0x33202836),
       child: Center(
         child: Icon(
           Icons.music_note_rounded,
           size: 24,
-          color: GlassColors.textSecondary.withValues(alpha: 0.7),
+          color: context.textSecondaryColor.withValues(alpha: 0.7),
         ),
       ),
     );

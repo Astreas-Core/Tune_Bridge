@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/di.dart';
@@ -110,11 +111,11 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: context.backgroundColor,
       body: SafeArea(
         child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: GlassColors.accent),
+            ? Center(
+                child: CircularProgressIndicator(color: context.primaryColor),
               )
             : ListView(
                 physics: const BouncingScrollPhysics(),
@@ -124,16 +125,16 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          color: Color(0xFF00FF41),
+                          color: context.primaryColor,
                         ),
                       ),
                       Expanded(
                         child: Text(
                           'Equalizer.',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFFEBFFE2),
+                            color: context.textPrimaryColor,
                             fontWeight: FontWeight.w900,
                             fontSize: 30,
                             letterSpacing: -0.8,
@@ -143,12 +144,12 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   GlassPanel(
                     blur: 0,
                     borderRadius: BorderRadius.circular(18),
-                    color: const Color(0xFF171717),
-                    borderColor: const Color(0x22FFFFFF),
+                    color: context.surfaceColor,
+                    borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
                       children: [
@@ -159,7 +160,7 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                               Text(
                                 'Enabled',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFFEBFFE2),
+                                  color: context.textPrimaryColor,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 15,
                                 ),
@@ -167,7 +168,7 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                               Text(
                                 _enabled ? 'Sound tuning is active' : 'Sound tuning is off',
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFFB9CCB2),
+                                  color: context.textSecondaryColor,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                 ),
@@ -177,43 +178,43 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                         ),
                         Switch.adaptive(
                           value: _enabled,
-                          activeThumbColor: const Color(0xFF00FF41),
-                          activeTrackColor: const Color(0xFF00FF41).withValues(alpha: 0.35),
+                          activeThumbColor: context.primaryColor,
+                          activeTrackColor: context.primaryColor.withValues(alpha: 0.35),
                           onChanged: _isLoading ? null : _toggleEnabled,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   GlassPanel(
                     blur: 0,
                     borderRadius: BorderRadius.circular(18),
-                    color: const Color(0xFF171717),
-                    borderColor: const Color(0x22FFFFFF),
+                    color: context.surfaceColor,
+                    borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
                       children: [
-                        const Icon(Icons.tune_rounded, color: Color(0xFF00FF41), size: 20),
-                        const SizedBox(width: 10),
+                        Icon(Icons.tune_rounded, color: context.primaryColor, size: 20),
+                        SizedBox(width: 10),
                         Text(
                           'Preset',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFFEBFFE2),
+                            color: context.textPrimaryColor,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _selectedPreset,
                               isExpanded: true,
                               borderRadius: BorderRadius.circular(14),
-                              dropdownColor: const Color(0xFF141A23),
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: GlassColors.textSecondary),
+                              dropdownColor: Color(0xFF141A23),
+                              icon: Icon(Icons.keyboard_arrow_down_rounded, color: context.textSecondaryColor),
                               style: GoogleFonts.inter(
-                                color: _enabled ? const Color(0xFFEBFFE2) : const Color(0xFFB9CCB2),
+                                color: _enabled ? context.textPrimaryColor : context.textSecondaryColor,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
                               ),
@@ -236,18 +237,18 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   if (_bands.isEmpty)
                     GlassPanel(
                       blur: 0,
                       borderRadius: BorderRadius.circular(18),
-                      color: const Color(0xFF171717),
-                      borderColor: const Color(0x22FFFFFF),
+                      color: context.surfaceColor,
+                      borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                       padding: const EdgeInsets.all(18),
                       child: Text(
                         'Play music to enable equalizer bands.',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9CCB2),
+                          color: context.textSecondaryColor,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -257,8 +258,8 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                     GlassPanel(
                       blur: 0,
                       borderRadius: BorderRadius.circular(22),
-                      color: const Color(0xFF171717),
-                      borderColor: const Color(0x22FFFFFF),
+                      color: context.surfaceColor,
+                      borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                       padding: const EdgeInsets.fromLTRB(8, 16, 8, 14),
                       child: SizedBox(
                         height: 310,
@@ -301,10 +302,10 @@ class _BandSlider extends StatelessWidget {
     final sliderTheme = SliderTheme.of(context).copyWith(
       trackHeight: 5,
       activeTrackColor:
-          enabled ? const Color(0xFF00FF41) : GlassColors.textSecondary.withValues(alpha: 0.3),
-      inactiveTrackColor: const Color(0x33353535),
-      thumbColor: enabled ? const Color(0xFFEBFFE2) : GlassColors.textSecondary,
-      overlayColor: const Color(0xFF00FF41).withValues(alpha: 0.12),
+          enabled ? context.primaryColor : context.textSecondaryColor.withValues(alpha: 0.3),
+      inactiveTrackColor: Color(0x33353535),
+      thumbColor: enabled ? context.textPrimaryColor : context.textSecondaryColor,
+      overlayColor: context.primaryColor.withValues(alpha: 0.12),
       thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8, elevation: 2),
       trackShape: const RoundedRectSliderTrackShape(),
     );
@@ -316,13 +317,13 @@ class _BandSlider extends StatelessWidget {
           '${value > 0 ? '+' : ''}${value.toInt()}dB',
           style: GoogleFonts.inter(
             color: enabled
-                ? const Color(0xFFEBFFE2)
-                : const Color(0xFFB9CCB2).withValues(alpha: 0.55),
+                ? context.textPrimaryColor
+                : context.textSecondaryColor.withValues(alpha: 0.55),
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SizedBox(
           height: 200,
           child: RotatedBox(
@@ -338,13 +339,13 @@ class _BandSlider extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Text(
           label,
           style: GoogleFonts.inter(
             color: enabled
-                ? const Color(0xFFEBFFE2)
-                : const Color(0xFFB9CCB2).withValues(alpha: 0.55),
+                ? context.textPrimaryColor
+                : context.textSecondaryColor.withValues(alpha: 0.55),
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),

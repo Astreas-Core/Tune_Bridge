@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +9,6 @@ import 'package:tune_bridge/core/routes.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
-import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class ArtistProfileScreen extends StatefulWidget {
   final String artistName;
@@ -66,14 +66,14 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: context.backgroundColor,
       appBar: AppBar(
-        backgroundColor: GlassColors.background,
+        backgroundColor: context.backgroundColor,
         elevation: 0,
         title: Text(
           widget.artistName,
           style: GoogleFonts.inter(
-            color: GlassColors.textPrimary,
+            color: context.textPrimaryColor,
             fontWeight: FontWeight.w800,
             fontSize: 20,
           ),
@@ -85,8 +85,8 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
           final uniqueTracks = snapshot.data ?? const <TrackModel>[];
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+            return Center(
+              child: CircularProgressIndicator(color: context.primaryColor),
             );
           }
 
@@ -95,7 +95,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
               child: Text(
                 'No songs found for this artist',
                 style: GoogleFonts.inter(
-                  color: GlassColors.textSecondary,
+                  color: context.textSecondaryColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -110,7 +110,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
               120,
             ),
             itemCount: uniqueTracks.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+            separatorBuilder: (_, __) => SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
               final track = uniqueTracks[index];
               return InkWell(
@@ -128,7 +128,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B1B1B),
+                    color: Color(0xFF1B1B1B),
                     borderRadius: BorderRadius.circular(AppRadii.md),
                   ),
                   child: Row(
@@ -140,10 +140,10 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           height: 56,
                           child: track.albumArtUrl == null
                               ? Container(
-                                  color: const Color(0xFF252525),
-                                  child: const Icon(
+                                  color: Color(0xFF252525),
+                                  child: Icon(
                                     Icons.music_note_rounded,
-                                    color: GlassColors.textSecondary,
+                                    color: context.textSecondaryColor,
                                   ),
                                 )
                               : Image.network(
@@ -152,7 +152,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                                 ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
+                      SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,18 +162,18 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
-                                color: GlassColors.textPrimary,
+                                color: context.textPrimaryColor,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
                               track.albumName.isNotEmpty ? track.albumName : track.artist,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
-                                color: GlassColors.textSecondary,
+                                color: context.textSecondaryColor,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
                               ),
@@ -181,9 +181,9 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.play_circle_fill_rounded,
-                        color: Color(0xFF00FF41),
+                        color: context.primaryColor,
                         size: 24,
                       ),
                     ],

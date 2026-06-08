@@ -1,10 +1,10 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/routes.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
-import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -22,7 +22,7 @@ class LibraryScreen extends StatelessWidget {
       animation: librarySignal,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: const Color(0xFF131313),
+          backgroundColor: Color(0xFF131313),
           body: SafeArea(
             child: ListView(
               physics: const BouncingScrollPhysics(),
@@ -31,13 +31,13 @@ class LibraryScreen extends StatelessWidget {
             Text(
               'Library',
               style: GoogleFonts.inter(
-                color: GlassColors.textPrimary,
+                color: context.textPrimaryColor,
                 fontWeight: FontWeight.w900,
                 fontSize: 56,
                 letterSpacing: -2,
               ),
             ),
-            const SizedBox(height: 22),
+            SizedBox(height: 22),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -48,17 +48,17 @@ class LibraryScreen extends StatelessWidget {
                       Text(
                         'COLLECTION',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9CCB2),
+                          color: context.textSecondaryColor,
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         'Liked Songs',
                         style: GoogleFonts.inter(
-                          color: GlassColors.textPrimary,
+                          color: context.textPrimaryColor,
                           fontWeight: FontWeight.w900,
                           fontSize: 34,
                           letterSpacing: -0.8,
@@ -67,7 +67,7 @@ class LibraryScreen extends StatelessWidget {
                       Text(
                         '${library.likedCount} tracks',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9CCB2),
+                          color: context.textSecondaryColor,
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
@@ -77,11 +77,11 @@ class LibraryScreen extends StatelessWidget {
                 ),
                 ElevatedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.likedSongs),
-                  icon: const Icon(Icons.shuffle_rounded, size: 20),
-                  label: const Text('SHUFFLE'),
+                  icon: Icon(Icons.shuffle_rounded, size: 20),
+                  label: Text('SHUFFLE'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00FF41),
-                    foregroundColor: const Color(0xFF003907),
+                    backgroundColor: context.primaryColor,
+                    foregroundColor: context.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     textStyle: GoogleFonts.inter(
                       fontWeight: FontWeight.w800,
@@ -93,7 +93,7 @@ class LibraryScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.section),
+            SizedBox(height: AppSpacing.section),
             _LibraryRow(
               title: 'Liked Songs',
               subtitle: '${library.likedCount} tracks',
@@ -148,7 +148,7 @@ class _LibraryRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: const Color(0xFF131313),
+          color: Color(0xFF131313),
           borderRadius: BorderRadius.circular(AppRadii.sm),
         ),
         child: Row(
@@ -157,12 +157,12 @@ class _LibraryRow extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A),
+                color: Color(0xFF2A2A2A),
                 borderRadius: BorderRadius.circular(AppRadii.sm),
               ),
-              child: Icon(icon, color: const Color(0xFF00E639), size: 24),
+              child: Icon(icon, color: context.primaryColor.withValues(alpha: 0.7), size: 24),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +170,7 @@ class _LibraryRow extends StatelessWidget {
                   Text(
                     title,
                     style: GoogleFonts.inter(
-                      color: GlassColors.textPrimary,
+                      color: context.textPrimaryColor,
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                     ),
@@ -178,7 +178,7 @@ class _LibraryRow extends StatelessWidget {
                   Text(
                     subtitle,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFB9CCB2),
+                      color: context.textSecondaryColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -186,7 +186,7 @@ class _LibraryRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.more_vert_rounded, color: GlassColors.textSecondary),
+            Icon(Icons.more_vert_rounded, color: context.textSecondaryColor),
           ],
         ),
       ),

@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -62,18 +63,18 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF171717),
+          backgroundColor: context.surfaceColor,
           title: Text(
             'Remove offline song?',
             style: GoogleFonts.inter(
-              color: GlassColors.textPrimary,
+              color: context.textPrimaryColor,
               fontWeight: FontWeight.w800,
             ),
           ),
           content: Text(
             'This will remove "${song.title}" from offline storage.',
             style: GoogleFonts.inter(
-              color: GlassColors.textSecondary,
+              color: context.textSecondaryColor,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -82,7 +83,7 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.inter(color: GlassColors.textSecondary),
+                style: GoogleFonts.inter(color: context.textSecondaryColor),
               ),
             ),
             TextButton(
@@ -114,7 +115,7 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: context.backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -124,16 +125,16 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_ios_new_rounded,
-                      color: Color(0xFF00FF41),
+                      color: context.primaryColor,
                     ),
                   ),
                   Expanded(
                     child: Text(
                       'Offline Songs.',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFFEBFFE2),
+                        color: context.textPrimaryColor,
                         fontWeight: FontWeight.w900,
                         fontSize: 30,
                         letterSpacing: -0.8,
@@ -146,40 +147,40 @@ class _OfflineSongsScreenState extends State<OfflineSongsScreen> {
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: GlassColors.accent),
+                  ? Center(
+                      child: CircularProgressIndicator(color: context.primaryColor),
                     )
                   : _songs.isEmpty
                       ? Center(
                           child: GlassPanel(
                             blur: 0,
                             borderRadius: BorderRadius.circular(20),
-                            color: const Color(0xFF161616),
-                            borderColor: const Color(0x22FFFFFF),
+                            color: context.surfaceColor,
+                            borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
                             padding: const EdgeInsets.all(20),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.cloud_off_rounded,
                                   size: 48,
-                                  color: GlassColors.textSecondary,
+                                  color: context.textSecondaryColor,
                                 ),
-                                const SizedBox(height: 10),
+                                SizedBox(height: 10),
                                 Text(
                                   'No offline songs yet',
                                   style: GoogleFonts.inter(
-                                    color: Color(0xFFEBFFE2),
+                                    color: context.textPrimaryColor,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 16,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text(
                                   'Download tracks from now playing to see them here.',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: Color(0xFFB9CCB2),
+                                    color: context.textSecondaryColor,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 12,
                                   ),

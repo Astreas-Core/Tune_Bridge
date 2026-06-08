@@ -11,15 +11,23 @@ import 'package:tune_bridge/core/services/audio_handler.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
 import 'package:tune_bridge/core/services/display_refresh_service.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
+import 'package:tune_bridge/core/services/auth_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/core/theme.dart';
 import 'package:tune_bridge/core/theme_cubit.dart';
 import 'package:tune_bridge/features/player/bloc/player_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:tune_bridge/core/services/firebase_options.dart';
 
 import 'dart:async';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Lock orientation to portrait
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -48,6 +56,9 @@ Future<void> main() async {
 
   // Register dependencies
   setupServiceLocator(localLibrary, audioHandler);
+  
+  // Eagerly initialize AuthService so it listens for changes
+  getIt<AuthService>();
 
   // Apply display refresh mode preference before UI interaction.
   await getIt<DisplayRefreshService>().applySavedPreference();
@@ -71,14 +82,18 @@ class TuneBridgeApp extends StatelessWidget {
           ),
         ),
       ],
-      child: MaterialApp(
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        theme: AppTheme.darkTheme,
-        darkTheme: AppTheme.darkTheme,
-        initialRoute: AppRoutes.splash,
-        onGenerateRoute: AppRoutes.onGenerateRoute,
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            themeMode: themeState.mode,
+            theme: themeState.useMaterial3 ? AppTheme.material3Theme(themeState.primaryColor) : AppTheme.lightTheme,
+            darkTheme: themeState.useMaterial3 ? AppTheme.material3Theme(themeState.primaryColor) : AppTheme.darkTheme,
+            initialRoute: AppRoutes.splash,
+            onGenerateRoute: AppRoutes.onGenerateRoute,
+          );
+        },
       ),
     );
   }

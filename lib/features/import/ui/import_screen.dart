@@ -1,10 +1,10 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tune_bridge/core/constants.dart';
 import 'package:tune_bridge/core/di.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/spotify_public_service.dart';
-import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({super.key});
@@ -118,7 +118,7 @@ class _ImportScreenState extends State<ImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1115),
+      backgroundColor: Color(0xFF0F1115),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, 140),
@@ -132,12 +132,12 @@ class _ImportScreenState extends State<ImportScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
+                    icon: Icon(Icons.arrow_back_rounded, color: context.primaryColor),
                   ),
                   Text(
                     'Import Music',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFEBFFE2),
+                      color: context.textPrimaryColor,
                       fontWeight: FontWeight.w900,
                       fontSize: 30,
                       letterSpacing: -0.8,
@@ -146,7 +146,7 @@ class _ImportScreenState extends State<ImportScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.xl),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.xl),
@@ -157,7 +157,7 @@ class _ImportScreenState extends State<ImportScreen> {
                     colors: [Color(0xFF1B2A1F), Color(0xFF102018), Color(0xFF0F1512)],
                   ),
                   borderRadius: BorderRadius.circular(AppRadii.lg),
-                  border: Border.all(color: const Color(0x3300FF41)),
+                  border: Border.all(color: Color(0x3300FF41)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,20 +168,20 @@ class _ImportScreenState extends State<ImportScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: const Color(0x2200FF41),
+                            color: context.primaryColor.withValues(alpha: 0.13),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.cloud_download_rounded,
-                            color: Color(0xFF00FF41),
+                            color: context.primaryColor,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             'Spotify Link Import',
                             style: GoogleFonts.inter(
-                              color: GlassColors.textPrimary,
+                              color: context.textPrimaryColor,
                               fontWeight: FontWeight.w800,
                               fontSize: 20,
                             ),
@@ -189,16 +189,16 @@ class _ImportScreenState extends State<ImportScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       'Paste a Spotify track, album, or playlist URL to instantly import into TuneBridge.',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFFB9CCB2),
+                        color: context.textSecondaryColor,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -211,27 +211,27 @@ class _ImportScreenState extends State<ImportScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.xl),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF171A20),
+                  color: Color(0xFF171A20),
                   borderRadius: BorderRadius.circular(AppRadii.lg),
-                  border: Border.all(color: const Color(0x22FFFFFF)),
+                  border: Border.all(color: context.textPrimaryColor.withValues(alpha: 0.13)),
                 ),
                 child: TextField(
                   controller: _controller,
-                  style: GoogleFonts.inter(color: GlassColors.textPrimary, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(color: context.textPrimaryColor, fontWeight: FontWeight.w600),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'https://open.spotify.com/...',
-                    hintStyle: GoogleFonts.inter(color: const Color(0xFFB9CCB2)),
+                    hintStyle: GoogleFonts.inter(color: context.textSecondaryColor),
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                    prefixIcon: const Icon(Icons.link_rounded, color: Color(0xFF00E639)),
+                    prefixIcon: Icon(Icons.link_rounded, color: context.primaryColor.withValues(alpha: 0.7)),
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: 8,
                 children: [
@@ -267,22 +267,22 @@ class _ImportScreenState extends State<ImportScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.xl),
+              SizedBox(height: AppSpacing.xl),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _onImport,
                   icon: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF003907)),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: context.colorScheme.onPrimary),
                         )
-                      : const Icon(Icons.download_for_offline_rounded),
+                      : Icon(Icons.download_for_offline_rounded),
                   label: Text(_isLoading ? 'IMPORTING...' : 'IMPORT SELECTED'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00FF41),
-                    foregroundColor: const Color(0xFF003907),
+                    backgroundColor: context.primaryColor,
+                    foregroundColor: context.colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     textStyle: GoogleFonts.inter(
@@ -294,14 +294,14 @@ class _ImportScreenState extends State<ImportScreen> {
                 ),
               ),
               if (_isLoading) ...[
-                const SizedBox(height: AppSpacing.xl),
+                SizedBox(height: AppSpacing.xl),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF14181F),
+                    color: Color(0xFF14181F),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0x2200FF41)),
+                    border: Border.all(color: context.primaryColor.withValues(alpha: 0.13)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,19 +309,19 @@ class _ImportScreenState extends State<ImportScreen> {
                       Text(
                         _progressLabel,
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9CCB2),
+                          color: context.textSecondaryColor,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      SizedBox(height: AppSpacing.sm),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                           value: _progress == 0 ? null : _progress,
                           minHeight: 8,
-                          backgroundColor: const Color(0xFF2A2A2A),
-                          color: const Color(0xFF00FF41),
+                          backgroundColor: Color(0xFF2A2A2A),
+                          color: context.primaryColor,
                         ),
                       ),
                     ],
@@ -349,19 +349,19 @@ class _TypeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0x1F00FF41),
+        color: Color(0x1F00FF41),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0x3300FF41)),
+        border: Border.all(color: Color(0x3300FF41)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF00FF41)),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: context.primaryColor),
+          SizedBox(width: 6),
           Text(
             label,
             style: GoogleFonts.inter(
-              color: const Color(0xFFB9CCB2),
+              color: context.textSecondaryColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -386,14 +386,14 @@ class _QuickLinkButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF171A20),
+          color: Color(0xFF171A20),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0x22FFFFFF)),
+          border: Border.all(color: context.textPrimaryColor.withValues(alpha: 0.13)),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: GlassColors.textSecondary,
+            color: context.textSecondaryColor,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,

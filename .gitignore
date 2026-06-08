@@ -47,3 +47,8 @@ app.*.map.json
 # Local Android machine/signing config
 android/local.properties
 android/key.properties
+
+# Firebase and JDK
+android/app/google-services.json
+jdk17/
+

@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,18 +36,18 @@ class _PlaylistsContent extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF171717),
+          backgroundColor: context.surfaceColor,
           title: Text(
             'Delete playlist?',
             style: GoogleFonts.inter(
-              color: const Color(0xFFEBFFE2),
+              color: context.textPrimaryColor,
               fontWeight: FontWeight.w800,
             ),
           ),
           content: Text(
             '"$playlistName" will be removed from imported playlists.',
             style: GoogleFonts.inter(
-              color: const Color(0xFFB9CCB2),
+              color: context.textSecondaryColor,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -56,7 +57,7 @@ class _PlaylistsContent extends StatelessWidget {
               child: Text(
                 'Cancel',
                 style: GoogleFonts.inter(
-                  color: const Color(0xFFB9CCB2),
+                  color: context.textSecondaryColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -66,7 +67,7 @@ class _PlaylistsContent extends StatelessWidget {
               child: Text(
                 'Delete',
                 style: GoogleFonts.inter(
-                  color: const Color(0xFFFF6B6B),
+                  color: Color(0xFFFF6B6B),
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -81,7 +82,7 @@ class _PlaylistsContent extends StatelessWidget {
     try {
       await getIt<LocalLibraryService>().removePlaylist(playlistId);
       if (!context.mounted) return;
-      context.read<PlaylistsBloc>().add(const PlaylistsRequested());
+      context.read<PlaylistsBloc>().add(PlaylistsRequested());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Deleted "$playlistName"')),
       );
@@ -96,12 +97,12 @@ class _PlaylistsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: context.backgroundColor,
       body: BlocBuilder<PlaylistsBloc, PlaylistsState>(
         builder: (context, state) {
           if (state is PlaylistsLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: GlassColors.accent),
+            return Center(
+              child: CircularProgressIndicator(color: context.primaryColor),
             );
           }
 
@@ -159,14 +160,14 @@ class _PlaylistsContent extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF00FF41),
-        foregroundColor: const Color(0xFF04210A),
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.backgroundColor,
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Create playlist flow coming soon')),
           );
         },
-        child: const Icon(Icons.add_rounded),
+        child: Icon(Icons.add_rounded),
       ),
     );
   }
@@ -188,9 +189,9 @@ class _PlaylistsShell extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: Color(0xFF00FF41),
+                    color: context.primaryColor,
                   ),
                 ),
                 Expanded(
@@ -200,7 +201,7 @@ class _PlaylistsShell extends StatelessWidget {
                       Text(
                         'Playlists.',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFEBFFE2),
+                          color: context.textPrimaryColor,
                           fontWeight: FontWeight.w900,
                           fontSize: 30,
                           letterSpacing: -0.8,
@@ -210,7 +211,7 @@ class _PlaylistsShell extends StatelessWidget {
                       Text(
                         'All your imported collections',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFB9CCB2),
+                          color: context.textSecondaryColor,
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
                           letterSpacing: 0.2,
@@ -238,27 +239,27 @@ class _PlaylistsEmpty extends StatelessWidget {
       child: GlassPanel(
         blur: 0,
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF161616),
-        borderColor: const Color(0x22FFFFFF),
+        color: context.surfaceColor,
+        borderColor: context.textPrimaryColor.withValues(alpha: 0.13),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.queue_music_rounded, size: 42, color: GlassColors.textSecondary),
-            const SizedBox(height: 10),
+            Icon(Icons.queue_music_rounded, size: 42, color: context.textSecondaryColor),
+            SizedBox(height: 10),
             Text(
               'No playlists yet',
               style: GoogleFonts.inter(
-                color: const Color(0xFFEBFFE2),
+                color: context.textPrimaryColor,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               'Import one from Spotify to get started.',
               style: GoogleFonts.inter(
-                color: const Color(0xFFB9CCB2),
+                color: context.textSecondaryColor,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
@@ -279,7 +280,7 @@ class _PlaylistsError extends StatelessWidget {
       child: Text(
         'Error loading playlists',
         style: GoogleFonts.inter(
-          color: const Color(0xFFB9CCB2),
+          color: context.textSecondaryColor,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -310,8 +311,8 @@ class _PlaylistTile extends StatelessWidget {
       child: GlassPanel(
         blur: 0,
         borderRadius: BorderRadius.circular(18),
-        color: const Color(0xFF171717),
-        borderColor: const Color(0x26FFFFFF),
+        color: context.surfaceColor,
+        borderColor: context.textPrimaryColor.withValues(alpha: 0.15),
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
@@ -320,7 +321,7 @@ class _PlaylistTile extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0x2200FF41)),
+                border: Border.all(color: context.primaryColor.withValues(alpha: 0.13)),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -328,12 +329,12 @@ class _PlaylistTile extends StatelessWidget {
                     ? Image.network(
                         imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholderIcon(),
+                        errorBuilder: (_, __, ___) => _placeholderIcon(context),
                       )
-                    : _placeholderIcon(),
+                    : _placeholderIcon(context),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
 
             Expanded(
               child: Column(
@@ -342,16 +343,16 @@ class _PlaylistTile extends StatelessWidget {
                   Text(
                     name,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFEBFFE2),
+                      color: context.textPrimaryColor,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '$trackCount tracks',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFB9CCB2),
+                      color: context.textSecondaryColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -362,23 +363,23 @@ class _PlaylistTile extends StatelessWidget {
             IconButton(
               onPressed: onDelete,
               tooltip: 'Delete playlist',
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline_rounded,
                 color: Color(0xFFFF6B6B),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF00FF41)),
+            Icon(Icons.chevron_right_rounded, color: context.primaryColor),
           ],
         ),
       ),
     );
   }
 
-  Widget _placeholderIcon() {
+  Widget _placeholderIcon(BuildContext context) {
     return Center(
       child: Icon(
         Icons.queue_music_rounded,
-        color: GlassColors.textSecondary,
+        color: context.textSecondaryColor,
         size: 24,
       ),
     );

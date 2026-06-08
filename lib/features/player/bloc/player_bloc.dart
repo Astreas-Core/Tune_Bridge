@@ -8,6 +8,8 @@ import 'package:tune_bridge/core/models/track_model.dart';
 import 'package:tune_bridge/core/services/audio_player_service.dart';
 import 'package:tune_bridge/core/services/local_library_service.dart';
 import 'package:tune_bridge/core/services/youtube_service.dart';
+import 'package:tune_bridge/core/di.dart';
+import 'package:tune_bridge/core/services/firebase_sync_service.dart';
 import 'package:tune_bridge/features/player/bloc/player_event.dart';
 import 'package:tune_bridge/features/player/bloc/player_state.dart';
 
@@ -212,7 +214,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       }
 
       String? videoId = resolvedTrack.youtubeVideoId;
-      if (videoId == null) {
+      // Ensure the video ID is actually a valid YouTube ID (11 chars) and not a fallback Spotify UUID
+      if (videoId == null || videoId.length != 11) {
         videoId = await _youtubeService.searchVideo(
           title: resolvedTrack.title,
           artist: resolvedTrack.artist,
@@ -225,6 +228,12 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           ));
           return;
         }
+        
+        // Successfully resolved! Cache the ID in Firestore for future playbacks.
+        // We only do this if it originally didn't have one, meaning it's a synced Spotify track.
+        try {
+          getIt<FirebaseSyncService>().updateTrackYoutubeId(resolvedTrack.id, videoId);
+        } catch (_) {}
       }
 
       // Check if track changed during search
@@ -306,7 +315,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     _prefetchInFlight.add(track.id);
     try {
       var videoId = track.youtubeVideoId;
-      if (videoId == null || videoId.isEmpty) {
+      if (videoId == null || videoId.length != 11) {
         videoId = await _youtubeService.searchVideo(
           title: track.title,
           artist: track.artist,

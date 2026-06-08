@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tune_bridge/features/library/ui/offline_songs_screen.dart';
 import 'package:tune_bridge/features/home/ui/artist_profile_screen.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
-import 'package:tune_bridge/ui/widgets/main_shell.dart';
 import 'package:tune_bridge/ui/widgets/splash_screen.dart';
 import 'package:tune_bridge/features/player/ui/now_playing_screen.dart';
 import 'package:tune_bridge/features/playlist/ui/playlist_screen.dart';
@@ -11,6 +10,7 @@ import 'package:tune_bridge/features/spotify/ui/liked_songs_screen.dart';
 import 'package:tune_bridge/features/search/ui/search_screen.dart';
 import 'package:tune_bridge/features/settings/ui/settings_screen.dart';
 import 'package:tune_bridge/features/import/ui/import_screen.dart';
+import 'package:tune_bridge/features/auth/ui/auth_wrapper.dart';
 
 /// Centralised route definitions.
 class AppRoutes {
@@ -33,7 +33,7 @@ class AppRoutes {
       case splash:
         return _fade(const SplashScreen());
       case home:
-        return _fade(const MainShell());
+        return _fade(const AuthWrapper());
       case likedSongs:
         return _fade(const LikedSongsScreen());
       case offlineSongs:
@@ -70,7 +70,7 @@ class AppRoutes {
         }
         return _fade(const ArtistProfileScreen(artistName: 'Artist', tracks: <TrackModel>[]));
       default:
-        return _fade(const MainShell());
+        return _fade(const AuthWrapper());
     }
   }
 

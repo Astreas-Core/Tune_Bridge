@@ -6,11 +6,11 @@ import 'package:tune_bridge/ui/widgets/glassmorphism.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color primary = GlassColors.accent;
-  static const Color surface = GlassColors.surface;
-  static const Color surfaceVariant = GlassColors.surfaceRaised;
-  static const Color textPrimary = GlassColors.textPrimary;
-  static const Color textSecondary = GlassColors.textSecondary;
+  static const Color primary = Color(0xFF2AE6C9);
+  static const Color surface = Color(0xFF0C0C0E);
+  static const Color surfaceVariant = Color(0xFF141419);
+  static const Color textPrimary = Color(0xFFF4F4F5);
+  static const Color textSecondary = Color(0xFF9A9AA3);
   static const Color error = Color(0xFFFF5B5B);
 
   static ThemeData _obsidianTheme() {
@@ -18,7 +18,7 @@ class AppTheme {
       brightness: Brightness.dark,
       useMaterial3: true,
       primaryColor: primary,
-      scaffoldBackgroundColor: GlassColors.background,
+      scaffoldBackgroundColor: Color(0xFF050505),
       colorScheme: const ColorScheme.dark(
         primary: primary,
         secondary: Color(0xFF67F0DA),
@@ -50,7 +50,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
-      dividerColor: const Color(0x1FFFFFFF),
+      dividerColor: Color(0x1FFFFFFF),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surface,
         selectedItemColor: primary,
@@ -68,7 +68,7 @@ class AppTheme {
       iconTheme: const IconThemeData(color: textPrimary),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: GlassColors.surfaceRaised,
+        backgroundColor: Color(0xFF141419),
         contentTextStyle: GoogleFonts.inter(
           color: textPrimary,
           fontWeight: FontWeight.w500,
@@ -84,4 +84,25 @@ class AppTheme {
   static ThemeData get darkTheme {
     return _obsidianTheme();
   }
+
+  static ThemeData material3Theme(Color seedColor) {
+    return ThemeData(
+      brightness: Brightness.dark,
+      useMaterial3: true,
+      colorSchemeSeed: seedColor,
+      fontFamily: GoogleFonts.inter().fontFamily,
+    );
+  }
+}
+
+extension BuildContextThemeExtension on BuildContext {
+  ThemeData get theme => Theme.of(this);
+  ColorScheme get colorScheme => theme.colorScheme;
+  
+  Color get backgroundColor => theme.scaffoldBackgroundColor;
+  Color get surfaceColor => colorScheme.surface;
+  Color get surfaceRaisedColor => colorScheme.surfaceContainerHigh;
+  Color get primaryColor => colorScheme.primary;
+  Color get textPrimaryColor => colorScheme.onSurface;
+  Color get textSecondaryColor => colorScheme.onSurfaceVariant;
 }

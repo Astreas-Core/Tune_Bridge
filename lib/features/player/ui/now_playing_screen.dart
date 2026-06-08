@@ -1,3 +1,4 @@
+import 'package:tune_bridge/core/theme.dart';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -76,11 +77,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       final Color c1 =
           palette.darkMutedColor?.color ??
           palette.dominantColor?.color ??
-          const Color(0xFF14211D);
+          Color(0xFF14211D);
       final Color c2 =
           palette.vibrantColor?.color ??
           palette.mutedColor?.color ??
-          const Color(0xFF17332A);
+          Color(0xFF17332A);
       final Color c3 =
           palette.lightVibrantColor?.color ??
           palette.lightMutedColor?.color ??
@@ -185,7 +186,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
         final useWideArtworkFrame = _useWideArtworkFrame(track);
 
         return Scaffold(
-          backgroundColor: GlassColors.background,
+          backgroundColor: context.backgroundColor,
           body: GestureDetector(
             onVerticalDragEnd: (details) => _onVerticalDragEnd(details, state),
             child: AnimatedContainer(
@@ -225,9 +226,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             children: [
                               IconButton(
                                 onPressed: () => Navigator.pop(context),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.keyboard_arrow_down_rounded,
-                                  color: GlassColors.textPrimary,
+                                  color: context.textPrimaryColor,
                                   size: 30,
                                 ),
                               ),
@@ -237,13 +238,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                     Text(
                                       'Now Playing',
                                       style: GoogleFonts.inter(
-                                        color: GlassColors.textSecondary,
+                                        color: context.textSecondaryColor,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: 0.3,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    SizedBox(height: 2),
                                     _HeaderMiniVisualizer(
                                       active: state.isPlaying,
                                     ),
@@ -257,7 +258,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Expanded(
                           child: Center(
                             child: AnimatedSwitcher(
@@ -275,20 +276,20 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                       borderRadius: BorderRadius.circular(26),
                                       child: DecoratedBox(
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF1A202C),
+                                          color: Color(0xFF1A202C),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: GlassColors.accent.withValues(alpha: 0.16),
+                                              color: context.primaryColor.withValues(alpha: 0.16),
                                               blurRadius: 28,
                                               offset: const Offset(0, 16),
                                             ),
                                           ],
                                         ),
                                         child: track.albumArtUrl == null
-                                            ? const Icon(
+                                            ? Icon(
                                                 Icons.music_note_rounded,
                                                 size: 88,
-                                                color: GlassColors.textSecondary,
+                                                color: context.textSecondaryColor,
                                               )
                                             : Stack(
                                                 fit: StackFit.expand,
@@ -335,10 +336,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                                               imageUrl: track.albumArtUrl!,
                                                               fit: BoxFit.cover,
                                                               errorWidget: (_, __, ___) =>
-                                                                  const Icon(
+                                                                  Icon(
                                                                     Icons.music_note_rounded,
                                                                     size: 88,
-                                                                    color: GlassColors.textSecondary,
+                                                                    color: context.textSecondaryColor,
                                                                   ),
                                                             ),
                                                           ),
@@ -361,7 +362,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                           child: GlassPanel(
                             borderRadius: BorderRadius.circular(28),
                             blur: 10,
-                            color: const Color(0x66101722),
+                            color: Color(0x66101722),
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                             child: Column(
                               children: [
@@ -377,19 +378,19 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                               track.title,
                                               softWrap: false,
                                               style: GoogleFonts.inter(
-                                                color: GlassColors.textPrimary,
+                                                color: context.textPrimaryColor,
                                                 fontSize: 23,
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
+                                          SizedBox(height: 2),
                                           Text(
                                             track.artist,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.inter(
-                                              color: GlassColors.textSecondary,
+                                              color: context.textSecondaryColor,
                                               fontSize: 15,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -397,7 +398,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
                                     _SquareActionButton(
                                       icon: _isDownloading
                                           ? null
@@ -407,7 +408,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                       onTap: _toggleDownload,
                                       loading: _isDownloading,
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
                                     _SquareActionButton(
                                       icon: _isLiked
                                           ? Icons.favorite_rounded
@@ -417,7 +418,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 14),
+                                SizedBox(height: 14),
                                 BlocBuilder<PlayerBloc, ps.PlayerState>(
                                   buildWhen: (previous, current) =>
                                       previous.position != current.position ||
@@ -439,15 +440,15 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                         SliderTheme(
                                           data: SliderTheme.of(context).copyWith(
                                             trackHeight: 4,
-                                            activeTrackColor: GlassColors.accent,
-                                            inactiveTrackColor: GlassColors.textSecondary
+                                            activeTrackColor: context.primaryColor,
+                                            inactiveTrackColor: context.textSecondaryColor
                                                 .withValues(alpha: 0.22),
-                                            thumbColor: GlassColors.textPrimary,
+                                            thumbColor: context.textPrimaryColor,
                                             thumbShape: const RoundSliderThumbShape(
                                               enabledThumbRadius: 5,
                                             ),
                                             overlayColor:
-                                                GlassColors.accent.withValues(alpha: 0.16),
+                                                context.primaryColor.withValues(alpha: 0.16),
                                           ),
                                           child: Slider(
                                             value: sliderValue,
@@ -479,7 +480,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                                   Duration(seconds: sliderValue.toInt()),
                                                 ),
                                                 style: GoogleFonts.inter(
-                                                  color: GlassColors.textSecondary,
+                                                  color: context.textSecondaryColor,
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -489,7 +490,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                                   Duration(seconds: durationSeconds),
                                                 ),
                                                 style: GoogleFonts.inter(
-                                                  color: GlassColors.textSecondary,
+                                                  color: context.textSecondaryColor,
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -497,7 +498,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 6),
+                                        SizedBox(height: 6),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
@@ -510,31 +511,31 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
+                                            SizedBox(width: 12),
                                             IconButton(
                                               onPressed: () => context
                                                   .read<PlayerBloc>()
                                                   .add(const PlayerPrevious()),
-                                              icon: const Icon(
+                                              icon: Icon(
                                                 Icons.skip_previous_rounded,
-                                                color: GlassColors.textPrimary,
+                                                color: context.textPrimaryColor,
                                                 size: 38,
                                               ),
                                             ),
-                                            const SizedBox(width: 6),
+                                            SizedBox(width: 6),
                                             _PlayButton(isPlaying: liveState.isPlaying),
-                                            const SizedBox(width: 6),
+                                            SizedBox(width: 6),
                                             IconButton(
                                               onPressed: () => context
                                                   .read<PlayerBloc>()
                                                   .add(const PlayerNext()),
-                                              icon: const Icon(
+                                              icon: Icon(
                                                 Icons.skip_next_rounded,
-                                                color: GlassColors.textPrimary,
+                                                color: context.textPrimaryColor,
                                                 size: 38,
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
+                                            SizedBox(width: 12),
                                             GlassIconButton(
                                               icon: Icons.repeat_rounded,
                                               isActive: liveState.repeatEnabled,
@@ -583,28 +584,28 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           return GlassPanel(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             blur: 10,
-            color: const Color(0xCC0D121B),
+            color: Color(0xCC0D121B),
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
             child: Column(
               children: [
                 Container(
                   width: 38,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 14),
+                  margin: EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
-                    color: GlassColors.textSecondary.withValues(alpha: 0.35),
+                    color: context.textSecondaryColor.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 Text(
                   'Queue',
                   style: GoogleFonts.inter(
-                    color: GlassColors.textPrimary,
+                    color: context.textPrimaryColor,
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Expanded(
                   child: ListView.builder(
                     controller: controller,
@@ -619,12 +620,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             width: 42,
                             height: 42,
                             child: item.albumArtUrl == null
-                                ? Container(color: const Color(0x33202A36))
+                                ? Container(color: Color(0x33202A36))
                                 : CachedNetworkImage(
                                     imageUrl: item.albumArtUrl!,
                                     fit: BoxFit.cover,
                                     errorWidget: (_, __, ___) =>
-                                        Container(color: const Color(0x33202A36)),
+                                        Container(color: Color(0x33202A36)),
                                   ),
                           ),
                         ),
@@ -634,7 +635,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             color:
-                                isCurrent ? GlassColors.accent : GlassColors.textPrimary,
+                                isCurrent ? context.primaryColor : context.textPrimaryColor,
                             fontWeight:
                                 isCurrent ? FontWeight.w700 : FontWeight.w500,
                           ),
@@ -644,13 +645,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                            color: GlassColors.textSecondary,
+                            color: context.textSecondaryColor,
                             fontSize: 12,
                           ),
                         ),
                         trailing: isCurrent
-                            ? const Icon(Icons.graphic_eq_rounded,
-                                color: GlassColors.accent)
+                            ? Icon(Icons.graphic_eq_rounded,
+                                color: context.primaryColor)
                             : null,
                         onTap: () {
                           context.read<PlayerBloc>().add(PlayerPlayTrack(
@@ -680,10 +681,10 @@ class _NowPlayingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlassColors.background,
+      backgroundColor: context.backgroundColor,
       body: SafeArea(
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -695,8 +696,8 @@ class _NowPlayingSkeleton extends StatelessWidget {
             ),
           ),
           child: Shimmer.fromColors(
-            baseColor: const Color(0xFF232A33),
-            highlightColor: const Color(0xFF2F3B47),
+            baseColor: Color(0xFF232A33),
+            highlightColor: Color(0xFF2F3B47),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
               child: Column(
@@ -704,21 +705,21 @@ class _NowPlayingSkeleton extends StatelessWidget {
                   Row(
                     children: [
                       _skeletonBox(34, 34, radius: 17),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           children: [
                             _skeletonBox(92, 10, radius: 6),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             _skeletonBox(128, 12, radius: 6),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       _skeletonBox(40, 40, radius: 14),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Expanded(
                     child: Center(
                       child: Container(
@@ -747,20 +748,20 @@ class _NowPlayingSkeleton extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _skeletonBox(220, 26, radius: 8),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8),
                                   _skeletonBox(130, 16, radius: 8),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             _skeletonBox(44, 44, radius: 14),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             _skeletonBox(44, 44, radius: 14),
                           ],
                         ),
-                        const SizedBox(height: 14),
+                        SizedBox(height: 14),
                         _skeletonBox(double.infinity, 4, radius: 3),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -768,18 +769,18 @@ class _NowPlayingSkeleton extends StatelessWidget {
                             _skeletonBox(38, 12, radius: 6),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _skeletonBox(44, 44, radius: 22),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             _skeletonBox(54, 54, radius: 27),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             _skeletonBox(76, 76, radius: 38),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             _skeletonBox(54, 54, radius: 27),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             _skeletonBox(44, 44, radius: 22),
                           ],
                         ),
@@ -829,23 +830,23 @@ class _SquareActionButton extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: active ? GlassColors.accent.withValues(alpha: 0.16) : const Color(0x221D2530),
+          color: active ? context.primaryColor.withValues(alpha: 0.16) : Color(0x221D2530),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: active ? GlassColors.accent.withValues(alpha: 0.6) : const Color(0x22FFFFFF),
+            color: active ? context.primaryColor.withValues(alpha: 0.6) : context.textPrimaryColor.withValues(alpha: 0.13),
           ),
         ),
         child: loading
-            ? const Padding(
+            ? Padding(
                 padding: EdgeInsets.all(12),
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: GlassColors.accent,
+                  color: context.primaryColor,
                 ),
               )
             : Icon(
                 icon,
-                color: active ? GlassColors.accent : GlassColors.textPrimary,
+                color: active ? context.primaryColor : context.textPrimaryColor,
               ),
       ),
     );
@@ -862,9 +863,9 @@ class _PlayButton extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isPlaying) {
-          context.read<PlayerBloc>().add(const PlayerPause());
+          context.read<PlayerBloc>().add(PlayerPause());
         } else {
-          context.read<PlayerBloc>().add(const PlayerResume());
+          context.read<PlayerBloc>().add(PlayerResume());
         }
       },
       child: AnimatedContainer(
@@ -874,14 +875,14 @@ class _PlayButton extends StatelessWidget {
         height: 76,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF00FF41), Color(0xFF00E639)],
+            colors: [context.primaryColor, context.primaryColor.withValues(alpha: 0.7)],
           ),
           boxShadow: [
             BoxShadow(
-              color: GlassColors.accent.withValues(alpha: 0.35),
+              color: context.primaryColor.withValues(alpha: 0.35),
               blurRadius: 22,
               offset: const Offset(0, 12),
             ),
@@ -889,7 +890,7 @@ class _PlayButton extends StatelessWidget {
         ),
         child: Icon(
           isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          color: const Color(0xFF003907),
+          color: context.colorScheme.onPrimary,
           size: 42,
         ),
       ),
@@ -946,8 +947,8 @@ class _HeaderMiniVisualizerState extends State<_HeaderMiniVisualizer>
                 margin: const EdgeInsets.symmetric(horizontal: 1),
                 decoration: BoxDecoration(
                   color: widget.active
-                      ? const Color(0xFF00FF41)
-                      : GlassColors.textSecondary.withValues(alpha: 0.7),
+                      ? context.primaryColor
+                      : context.textSecondaryColor.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
