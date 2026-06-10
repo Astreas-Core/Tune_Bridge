@@ -5,7 +5,7 @@
   <p>
     <a href="https://github.com/Astreas-Core/Tune_Bridge/releases/latest">Download Latest APK</a>
     ·
-    <a href="https://github.com/Astreas-Core/SAREGX">SAREGX (Web App Companion)</a>
+    <a href="https://saregx.vercel.app/">SAREGX (Web App Companion)</a>
   </p>
 </div>
 
