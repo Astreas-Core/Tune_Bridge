@@ -96,8 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 final recentTracks = _recentTracks();
                 final isHomeLoading = snapshot.connectionState != ConnectionState.done;
                 final homeData = snapshot.data;
-                final topArtists =
-                  isHomeLoading ? const <_TopArtist>[] : (homeData?.topArtists ?? const <_TopArtist>[]);
                 final recommendedTracks =
                   isHomeLoading ? const <TrackModel>[] : (homeData?.recommendedTracks ?? recentTracks);
 
@@ -226,68 +224,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.sm + 2, AppSpacing.xl, 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Top artists for you',
-                            style: GoogleFonts.inter(
-                              color: context.textPrimaryColor,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: _refreshArtists,
-                          child: Text(
-                            'REFRESH',
-                            style: GoogleFonts.inter(
-                              color: context.primaryColor,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 10,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 222,
-                    child: isHomeLoading
-                        ? const _TopArtistsSkeletonRow()
-                        : topArtists.isEmpty
-                        ? const _EmptyTopArtists()
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: topArtists.length,
-                            itemBuilder: (context, index) {
-                              final artist = topArtists[index];
-                              return _TopArtistCard(
-                                artist: artist,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.artistProfile,
-                                    arguments: {
-                                      'artist': artist.name,
-                                      'tracks': artist.tracks,
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.sm + 2, AppSpacing.xl, 6),
                     child: Text(
                       'Recently Played',
                       style: GoogleFonts.inter(
@@ -333,12 +269,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<_HomeData> _loadHomeData() async {
     final results = await Future.wait<dynamic>([
       _library.getPersonalizedRecommendations(limit: 10, seed: _recommendedRefreshSeed),
-      _loadTopArtists(seed: _artistsRefreshSeed),
       _discoverUnseenRecommendations(limit: 10, seed: _recommendedRefreshSeed),
     ]);
 
     final localRecommendations = (results[0] as List<TrackModel>);
-    final unseenRecommendations = (results[2] as List<TrackModel>);
+    final unseenRecommendations = (results[1] as List<TrackModel>);
     final uniqueRecommendations = _mergeUniqueRecommendations(
       primary: unseenRecommendations,
       secondary: localRecommendations,
@@ -347,7 +282,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return _HomeData(
       recommendedTracks: uniqueRecommendations,
-      topArtists: (results[1] as List<_TopArtist>),
     );
   }
 
@@ -422,17 +356,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final queries = <String>[];
     for (final entry in topArtists.take(6)) {
-      queries.add('${entry.key} latest song');
-      queries.add('${entry.key} new release');
+      queries.add('${entry.key} mix');
     }
     for (final t in recent.take(4)) {
-      queries.add('${t.artist} songs like ${_shortTitle(t.title)}');
+      queries.add('${t.artist} mix');
     }
     if (queries.isEmpty) {
       queries.addAll(const [
         'trending songs 2026',
         'new music releases',
-        'viral songs official audio',
       ]);
     }
 
@@ -454,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       for (final track in results) {
         final artistKey = track.artist.trim().toLowerCase();
-        if ((discoveredArtistUsage[artistKey] ?? 0) >= 1) continue;
+        if ((discoveredArtistUsage[artistKey] ?? 0) >= 2) continue;
         if (knownIds.contains(track.id)) continue;
         if (_isLowQualityCandidate(track)) continue;
 
@@ -516,95 +448,6 @@ class _HomeScreenState extends State<HomeScreen> {
         text.contains('mashup') ||
         text.contains('compilation') ||
         text.contains('ringtone');
-  }
-
-  Future<List<_TopArtist>> _loadTopArtists({required int seed}) async {
-    final tracks = await _library.getAllKnownTracks();
-    if (tracks.isEmpty) {
-      return const <_TopArtist>[];
-    }
-
-    final byArtist = <String, List<TrackModel>>{};
-    final displayNameByKey = <String, String>{};
-
-    for (final track in tracks) {
-      final rawArtist = track.artist.trim();
-      if (rawArtist.isEmpty || rawArtist.toLowerCase() == 'unknown') continue;
-      final key = rawArtist.toLowerCase();
-      byArtist.putIfAbsent(key, () => <TrackModel>[]).add(track);
-      displayNameByKey.putIfAbsent(key, () => rawArtist);
-    }
-
-    if (byArtist.isEmpty) {
-      return const <_TopArtist>[];
-    }
-
-    final recent = _library.getRecentTracks(limit: 40);
-    final liked = _library.getLikedSongs();
-
-    final recencyBoost = <String, double>{};
-    for (var i = 0; i < recent.length; i++) {
-      final key = recent[i].artist.trim().toLowerCase();
-      if (key.isEmpty) continue;
-      final boost = (recent.length - i) / recent.length;
-      recencyBoost[key] = (recencyBoost[key] ?? 0) + (boost * 3.0);
-    }
-
-    final likedBoost = <String, double>{};
-    for (final track in liked) {
-      final key = track.artist.trim().toLowerCase();
-      if (key.isEmpty) continue;
-      likedBoost[key] = (likedBoost[key] ?? 0) + 0.35;
-    }
-
-    final ranked = <_TopArtist>[];
-    byArtist.forEach((key, artistTracks) {
-      final dedup = <String, TrackModel>{};
-      for (final track in artistTracks) {
-        final fingerprint =
-            '${track.id}::${track.title.toLowerCase().trim()}::${track.artist.toLowerCase().trim()}';
-        dedup.putIfAbsent(fingerprint, () => track);
-      }
-      final uniqueTracks = dedup.values.toList(growable: false);
-      uniqueTracks.sort((a, b) => b.title.compareTo(a.title));
-
-      final score =
-          uniqueTracks.length.toDouble() +
-          (recencyBoost[key] ?? 0) +
-          (likedBoost[key] ?? 0);
-
-      ranked.add(
-        _TopArtist(
-          name: displayNameByKey[key] ?? key,
-          tracks: uniqueTracks,
-          highlightTrack: uniqueTracks.first,
-          score: score,
-        ),
-      );
-    });
-
-    ranked.sort((a, b) => b.score.compareTo(a.score));
-
-    final shortlist = ranked.take(12).toList(growable: false);
-    if (shortlist.length <= 1) {
-      return shortlist;
-    }
-
-    final bucket = DateTime.now().millisecondsSinceEpoch ~/
-        const Duration(minutes: 5).inMilliseconds;
-    final random = math.Random(bucket + seed + shortlist.length);
-    final rotatingHead = shortlist.take(math.min(6, shortlist.length)).toList();
-    rotatingHead.shuffle(random);
-    final stableTail = shortlist.skip(rotatingHead.length).toList(growable: false);
-
-    final selected = [...rotatingHead, ...stableTail].take(8).toList(growable: false);
-    final withImages = await Future.wait(
-      selected.map((artist) async {
-        final profileImageUrl = await _artistImageService.resolveArtistImage(artist.name);
-        return artist.copyWith(profileImageUrl: profileImageUrl);
-      }),
-    );
-    return withImages;
   }
 
   List<TrackModel> _recentTracks() {
@@ -748,175 +591,6 @@ class _RecommendationSkeletonCard extends StatelessWidget {
   }
 }
 
-class _TopArtistCard extends StatelessWidget {
-  final _TopArtist artist;
-  final VoidCallback onTap;
-
-  const _TopArtistCard({required this.artist, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final avatarUrl = artist.profileImageUrl;
-    final avatarColors = _avatarGradientForName(artist.name);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 158,
-        margin: const EdgeInsets.only(right: AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 132,
-              height: 132,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: avatarColors,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: avatarColors.last.withValues(alpha: 0.28),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Container(
-                  color: Color(0xFF131A22),
-                  child: avatarUrl == null || avatarUrl.isEmpty
-                      ? Center(
-                          child: Text(
-                            _artistInitials(artist.name),
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.6,
-                            ),
-                          ),
-                        )
-                      : Image.network(
-                          avatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Text(
-                              _artistInitials(artist.name),
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 34,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.6,
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
-              ),
-            ),
-            SizedBox(height: AppSpacing.sm),
-            Text(
-              artist.name,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: context.textPrimaryColor,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TopArtistsSkeletonRow extends StatelessWidget {
-  const _TopArtistsSkeletonRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Color(0xFF232A33),
-      highlightColor: Color(0xFF2F3B47),
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-        scrollDirection: Axis.horizontal,
-        children: const [
-          _TopArtistSkeletonCard(),
-          _TopArtistSkeletonCard(),
-          _TopArtistSkeletonCard(),
-          _TopArtistSkeletonCard(),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopArtistSkeletonCard extends StatelessWidget {
-  const _TopArtistSkeletonCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 158,
-      margin: const EdgeInsets.only(right: AppSpacing.md),
-      child: Column(
-        children: [
-          Container(
-            width: 132,
-            height: 132,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: AppSpacing.sm),
-          Container(
-            width: 112,
-            height: 16,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-List<Color> _avatarGradientForName(String name) {
-  final palettes = <List<Color>>[
-    const [Color(0xFF1B8A5A), Color(0xFF0D3B2F)],
-    const [Color(0xFF3A6EA5), Color(0xFF1B3654)],
-    const [Color(0xFF8A5A9E), Color(0xFF3F2A55)],
-    const [Color(0xFF9A6A3A), Color(0xFF4B321B)],
-    const [Color(0xFF2F7E95), Color(0xFF1A3D4A)],
-  ];
-  final hash = name.toLowerCase().codeUnits.fold<int>(0, (a, b) => a + b);
-  return palettes[hash % palettes.length];
-}
-
-String _artistInitials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((e) => e.isNotEmpty)
-      .toList(growable: false);
-  if (parts.isEmpty) return 'A';
-  if (parts.length == 1) return parts.first.characters.first.toUpperCase();
-  final first = parts.first.characters.first.toUpperCase();
-  final second = parts.last.characters.first.toUpperCase();
-  return '$first$second';
-}
 
 class _TrackRow extends StatelessWidget {
   final TrackModel track;
@@ -981,32 +655,6 @@ class _TrackRow extends StatelessWidget {
   }
 }
 
-class _EmptyTopArtists extends StatelessWidget {
-  const _EmptyTopArtists();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-          color: Color(0xFF1B1B1B),
-        ),
-        child: Center(
-          child: Text(
-            'Play and like songs to generate top artists',
-            style: GoogleFonts.inter(
-              color: context.textSecondaryColor,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyRecommendations extends StatelessWidget {
   const _EmptyRecommendations();
 
@@ -1035,44 +683,10 @@ class _EmptyRecommendations extends StatelessWidget {
 
 class _HomeData {
   final List<TrackModel> recommendedTracks;
-  final List<_TopArtist> topArtists;
 
   const _HomeData({
     required this.recommendedTracks,
-    required this.topArtists,
   });
-}
-
-class _TopArtist {
-  final String name;
-  final List<TrackModel> tracks;
-  final TrackModel highlightTrack;
-  final double score;
-  final String? profileImageUrl;
-
-  const _TopArtist({
-    required this.name,
-    required this.tracks,
-    required this.highlightTrack,
-    required this.score,
-    this.profileImageUrl,
-  });
-
-  _TopArtist copyWith({
-    String? name,
-    List<TrackModel>? tracks,
-    TrackModel? highlightTrack,
-    double? score,
-    String? profileImageUrl,
-  }) {
-    return _TopArtist(
-      name: name ?? this.name,
-      tracks: tracks ?? this.tracks,
-      highlightTrack: highlightTrack ?? this.highlightTrack,
-      score: score ?? this.score,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-    );
-  }
 }
 
 

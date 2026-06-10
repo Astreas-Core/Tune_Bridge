@@ -170,6 +170,29 @@ class LocalLibraryService {
         await _recentBox.deleteAll(keysToDelete);
       }
     }
+    getIt<FirebaseSyncService>().uploadRecentlyPlayed(track);
+  }
+
+  Future<void> overwriteHistory(List<TrackModel> historyTracks) async {
+    _invalidateKnownTracksCache();
+    await _recentBox.clear();
+    final Map<String, dynamic> entries = {};
+    for (int i = 0; i < historyTracks.length; i++) {
+      final track = historyTracks[i];
+      entries[track.id] = {
+        'track': _trackToJson(track),
+        // use reversed timestamp to keep them sorted the same way
+        'playedAt': DateTime.now().millisecondsSinceEpoch - i * 1000,
+      };
+    }
+    await _recentBox.putAll(entries);
+  }
+
+  void overwriteSearchHistory(List<String> queries) {
+    if (Hive.isBoxOpen('settings_box')) {
+      final box = Hive.box('settings_box');
+      box.put('search_history', queries);
+    }
   }
 
   ValueListenable<Box> get recentTracksListenable => _recentBox.listenable();

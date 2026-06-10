@@ -7,6 +7,8 @@ import 'package:tune_bridge/core/services/youtube_service.dart';
 import 'package:tune_bridge/core/models/track_model.dart';
 import 'package:tune_bridge/features/search/bloc/search_event.dart';
 import 'package:tune_bridge/features/search/bloc/search_state.dart';
+import 'package:tune_bridge/core/di.dart';
+import 'package:tune_bridge/core/services/firebase_sync_service.dart';
 
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final YouTubeService _youtubeService;
@@ -137,6 +139,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final trimmed = cleaned.take(_maxHistory).toList(growable: false);
 
     _box.put(_historyKey, trimmed);
+    // Push the search query to Firebase
+    getIt<FirebaseSyncService>().uploadSearchQuery(query);
   }
 
   void _sanitizeAndPersistHistory() {

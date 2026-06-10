@@ -16,6 +16,8 @@ class FirebaseSyncService {
   bool _isSyncing = false;
   StreamSubscription? _likesSubscription;
   StreamSubscription? _playlistsSubscription;
+  StreamSubscription? _historySubscription;
+  StreamSubscription? _searchesSubscription;
 
   void startSync() {
     if (_auth.currentUser == null) return;
@@ -108,6 +110,59 @@ class FirebaseSyncService {
         }
       }
     });
+
+    // Listen for history from Cloud
+    _historySubscription?.cancel();
+    _historySubscription = _firestore
+        .collection('users')
+        .doc(_auth.currentUser!.uid)
+        .collection('history')
+        .orderBy('playedAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .listen((snapshot) {
+      final localLib = getIt<LocalLibraryService>();
+      final List<TrackModel> historyTracks = [];
+      
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        historyTracks.add(TrackModel(
+          id: data['id'] ?? doc.id,
+          title: data['title'] ?? 'Unknown',
+          artist: data['artist'] ?? 'Unknown',
+          albumName: data['albumName'] ?? 'Unknown',
+          albumArtUrl: data['thumb'],
+          durationMs: data['durationMs'] ?? 0,
+          youtubeVideoId: data['id'],
+        ));
+      }
+      localLib.overwriteHistory(historyTracks);
+    });
+
+    // Listen for searches from Cloud
+    _searchesSubscription?.cancel();
+    _searchesSubscription = _firestore
+        .collection('users')
+        .doc(_auth.currentUser!.uid)
+        .collection('searches')
+        .orderBy('searchedAt', descending: true)
+        .limit(20)
+        .snapshots()
+        .listen((snapshot) {
+      final localLib = getIt<LocalLibraryService>();
+      final List<String> searchQueries = [];
+      final seenQueries = <String>{};
+      
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final q = (data['query'] as String? ?? '').trim().toLowerCase();
+        if (q.isNotEmpty && !seenQueries.contains(q)) {
+          seenQueries.add(q);
+          searchQueries.add(data['query'] as String);
+        }
+      }
+      localLib.overwriteSearchHistory(searchQueries);
+    });
   }
 
   void stopSync() {
@@ -116,6 +171,10 @@ class FirebaseSyncService {
     _likesSubscription = null;
     _playlistsSubscription?.cancel();
     _playlistsSubscription = null;
+    _historySubscription?.cancel();
+    _historySubscription = null;
+    _searchesSubscription?.cancel();
+    _searchesSubscription = null;
     _log.i("Firebase sync stopped");
   }
 
@@ -175,6 +234,50 @@ class FirebaseSyncService {
       _log.i("Removed synced liked song: $trackId");
     } catch (e) {
       _log.e("Failed to remove synced liked song: $e");
+    }
+  }
+
+  Future<void> uploadRecentlyPlayed(TrackModel track) async {
+    if (_auth.currentUser == null) return;
+    try {
+      final trackId = track.youtubeVideoId ?? track.id;
+      // In web app, the history document ID is combination of trackId + timestamp or randomly generated.
+      // But it seems the web app overwrites same track if we just use trackId or generates new.
+      // Web app `history` doc format uses `trackId` or a new doc. We will use `trackId`.
+      await _firestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .collection('history')
+          .doc(trackId)
+          .set({
+        'id': trackId,
+        'title': track.title,
+        'artist': track.artist,
+        'thumb': track.albumArtUrl,
+        'playedAt': FieldValue.serverTimestamp(),
+      });
+      _log.i("Synced recently played: ${track.title}");
+    } catch (e) {
+      _log.e("Failed to sync recently played: $e");
+    }
+  }
+
+  Future<void> uploadSearchQuery(String query) async {
+    if (_auth.currentUser == null) return;
+    try {
+      final docId = query.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+      await _firestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .collection('searches')
+          .doc(docId)
+          .set({
+        'query': query.trim(),
+        'searchedAt': FieldValue.serverTimestamp(),
+      });
+      _log.i("Synced search query: $query");
+    } catch (e) {
+      _log.e("Failed to sync search query: $e");
     }
   }
 
